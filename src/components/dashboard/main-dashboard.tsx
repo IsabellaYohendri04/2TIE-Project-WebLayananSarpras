@@ -1,13 +1,13 @@
-import { WelcomeCard } from "@/components/dashboard/welcome-card";
-import { RoomCard } from "@/components/dashboard/room-card";
-import { DeviceCard } from "@/components/dashboard/device-card";
-import { AirConditioning } from "@/components/dashboard/air-conditioning";
-import { UsersWidget } from "@/components/dashboard/users";
-import { ConsumptionChart } from "@/components/dashboard/consumption-chart";
-import { Shortcuts } from "@/components/dashboard/shortcuts";
-import { LightPanels } from "@/components/dashboard/light-panels";
-import { Scenes } from "@/components/dashboard/scenes";
-import EnergyWidget from "/components/dashboard/energy-widget";
+// import { WelcomeCard } from "./welcome-card";
+// import { RoomCard } from "./room-card";
+// import { DeviceCard } from "./device-card";
+// import { AirConditioning } from "./air-conditioning";
+// import { UsersWidget } from "./users";
+// import { ConsumptionChart } from "./consumption-chart";
+// import { Shortcuts } from "./shortcuts";
+// import { LightPanels } from "./light-panels";
+// import { Scenes } from "./scenes";
+// import EnergyWidget from "./energy-widget";
 
 export function MainDashboard() {
   return (
