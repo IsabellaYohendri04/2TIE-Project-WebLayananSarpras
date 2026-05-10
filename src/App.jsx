@@ -1,50 +1,143 @@
-import React, { useEffect } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import React, {
+  useEffect,
+  lazy,
+  Suspense,
+} from "react";
+
+import {
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 
 import "./css/style.css";
-
 import "./charts/ChartjsConfig";
 
-// Import pages
+// Layout
+import MainLayout from "./partials/MainLayout";
+import AuthLayout from "./partials/AuthLayout";
+
+// Components
+import Loading from "./components/Loading";
+
+// Normal Import
 import Dashboard from "./pages/Dashboard";
 
 import KelolaFasilitas from "./pages/pegawai/KelolaFasilitas";
 import KelolaPegawai from "./pages/pegawai/KelolaPegawai";
 
-import KelolaBarang from "./pages/pegawai/KelolaBarang";
 import KelolaRuangan from "./pages/pegawai/KelolaRuangan";
 import KelolaLaboratorium from "./pages/pegawai/KelolaLaboratorium";
 
 import PeminjamanBarang from "./pages/pegawai/PeminjamanBarang";
 import PeminjamanRuangan from "./pages/pegawai/PeminjamanRuangan";
 import PeminjamanLaboratorium from "./pages/pegawai/PeminjamanLaboratorium";
+
+// Lazy Loading Auth
+const Login = lazy(() =>
+  import("./pages/auth/Login")
+);
+
+const Register = lazy(() =>
+  import("./pages/auth/Register")
+);
+
+const Forgot = lazy(() =>
+  import("./pages/auth/Forgot")
+);
+
 function App() {
+
   const location = useLocation();
 
   useEffect(() => {
+
     document.querySelector("html").style.scrollBehavior = "auto";
+
     window.scroll({ top: 0 });
+
     document.querySelector("html").style.scrollBehavior = "";
-  }, [location.pathname]); // triggered on route change
+
+  }, [location.pathname]);
 
   return (
-    <>
+
+    <Suspense fallback={<Loading />}>
+
       <Routes>
-        <Route path="/" element={<Dashboard />} />
 
-        <Route path="/pegawai" element={<KelolaPegawai />} />
+        {/* Main Layout */}
+        <Route element={<MainLayout />}>
 
-        {/* Fasilitas */}
-        <Route path="/fasilitas/barang" element={<KelolaFasilitas />} />
-        <Route path="/fasilitas/ruangan" element={<KelolaRuangan />} />
-        <Route path="/fasilitas/laboratorium" element={<KelolaLaboratorium />} />
+          {/* Dashboard */}
+          <Route
+            path="/"
+            element={<Dashboard />}
+          />
 
-        {/* Peminjaman */}
-        <Route path="/peminjaman/barang" element={<PeminjamanBarang />} />
-        <Route path="/peminjaman/ruangan" element={<PeminjamanRuangan />} />
-        <Route path="/peminjaman/laboratorium" element={<PeminjamanLaboratorium />} />
+          {/* Pegawai */}
+          <Route
+            path="/pegawai"
+            element={<KelolaPegawai />}
+          />
+
+          {/* Fasilitas */}
+          <Route
+            path="/fasilitas/barang"
+            element={<KelolaFasilitas />}
+          />
+
+          <Route
+            path="/fasilitas/ruangan"
+            element={<KelolaRuangan />}
+          />
+
+          <Route
+            path="/fasilitas/laboratorium"
+            element={<KelolaLaboratorium />}
+          />
+
+          {/* Peminjaman */}
+          <Route
+            path="/peminjaman/barang"
+            element={<PeminjamanBarang />}
+          />
+
+          <Route
+            path="/peminjaman/ruangan"
+            element={<PeminjamanRuangan />}
+          />
+
+          <Route
+            path="/peminjaman/laboratorium"
+            element={<PeminjamanLaboratorium />}
+          />
+
+        </Route>
+
+        {/* Auth Layout */}
+        <Route element={<AuthLayout />}>
+
+          <Route
+            path="/login"
+            element={<Login />}
+          />
+
+          <Route
+            path="/register"
+            element={<Register />}
+          />
+
+          <Route
+            path="/forgot"
+            element={<Forgot />}
+          />
+
+        </Route>
+
       </Routes>
-    </>
+
+    </Suspense>
   );
 }
 
