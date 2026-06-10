@@ -27,6 +27,9 @@ import PeminjamanLaboratorium from "./pages/pegawai/PeminjamanLaboratorium";
 
 import DashboardPeminjam from "./pages/peminjam/DashboardPeminjam";
 import DetailPeminjaman from "./pages/pegawai/DetailPeminjaman";
+import FormPeminjaman from "./pages/peminjam/FormPeminjamanBarang";
+import FormPeminjamanBarang from "./pages/peminjam/FormPeminjamanBarang";
+import FormPeminjamanRuangan from "./pages/peminjam/FormPeminjamanRuangan";
 
 // Lazy Loading Auth
 const Login = lazy(() => import("./pages/auth/Login"));
@@ -72,6 +75,8 @@ function App() {
           <Route path="/peminjaman/barang" element={<PeminjamanBarang />} />
 
           <Route path="/peminjaman/ruangan" element={<PeminjamanRuangan />} />
+          <Route path="/peminjam/peminjaman-barang" element={<FormPeminjamanBarang />} />
+          <Route path="/peminjam/peminjaman-ruangan" element={<FormPeminjamanRuangan />} />
 
           <Route
             path="/peminjaman/laboratorium"

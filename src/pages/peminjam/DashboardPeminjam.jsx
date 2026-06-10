@@ -1,265 +1,395 @@
-import React from "react";
-import FilterButton from "../../components/DropdownFilter";
-import Datepicker from "../../components/Datepicker";
+import React, { useState } from "react";
 import Banner from "../../partials/Banner";
 
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+
+
+import { useNavigate } from "react-router-dom";
+
 function DashboardPeminjam() {
-  return (
-    <>
-      <main className="grow">
-        <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
 
-          {/* Header */}
-          <div className="sm:flex sm:justify-between sm:items-center mb-8">
+  const navigate = useNavigate(); 
+  const [selectedDate, setSelectedDate] = useState("");
+const [showModal, setShowModal] = useState(false);
 
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-                Halo, Nailah 👋
-              </h1>
+  const events = [
+  // Ketersediaan Sarpras
+  {
+    title: "Laptop Tersedia",
+    date: "2026-06-12",
+    color: "#22c55e",
+  },
+  {
+    title: "Ruang Seminar Tersedia",
+    date: "2026-06-15",
+    color: "#22c55e",
+  },
+  {
+    title: "Lab Komputer Penuh",
+    date: "2026-06-18",
+    color: "#ef4444",
+  },
 
-              <p className="text-gray-500 mt-2">
-                Selamat datang di Sistem Layanan Sarana dan Prasarana
-              </p>
-            </div>
+  // Hari Libur Nasional
+  {
+    title: "🇮🇩 Tahun Baru",
+    date: "2026-01-01",
+    color: "#dc2626",
+  },
+  {
+    title: "🇮🇩 Hari Buruh",
+    date: "2026-05-01",
+    color: "#dc2626",
+  },
+  {
+    title: "🇮🇩 Hari Kemerdekaan RI",
+    date: "2026-08-17",
+    color: "#dc2626",
+  },
+  {
+    title: "🇮🇩 Hari Natal",
+    date: "2026-12-25",
+    color: "#dc2626",
+  },
+];
+return (
+<> <main className="grow bg-slate-50"> <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
 
-            <div className="flex gap-2 mt-4 sm:mt-0">
-              <FilterButton align="right" />
-              <Datepicker align="right" />
-            </div>
+```
+      {/* Header */}
+      <div className="mb-8">
 
-          </div>
+        <h1 className="text-3xl font-bold text-gray-800">
+          Halo, Nailah 👋
+        </h1>
 
-          {/* Quick Action */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <p className="text-gray-500 mt-2">
+          Selamat datang di Sistem Layanan Sarana dan Prasarana Politeknik Caltex Riau
+        </p>
 
-            <button className="bg-violet-600 hover:bg-violet-700 text-white rounded-2xl p-6 shadow-lg transition-all hover:scale-105 text-left">
-              <div className="text-5xl mb-3">📦</div>
-              <h3 className="font-bold text-lg">
-                Pinjam Barang
-              </h3>
-              <p className="mt-2 opacity-90">
-                Ajukan peminjaman barang sarpras
-              </p>
-            </button>
+      </div>
 
-            <button className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-6 shadow-lg transition-all hover:scale-105 text-left">
-              <div className="text-5xl mb-3">🏢</div>
-              <h3 className="font-bold text-lg">
-                Pinjam Ruangan
-              </h3>
-              <p className="mt-2 opacity-90">
-                Reservasi ruang kelas dan laboratorium
-              </p>
-            </button>
+      {/* Quick Action */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
 
-            <button className="bg-green-600 hover:bg-green-700 text-white rounded-2xl p-6 shadow-lg transition-all hover:scale-105 text-left">
-              <div className="text-5xl mb-3">🔧</div>
-              <h3 className="font-bold text-lg">
-                Lapor Kerusakan
-              </h3>
-              <p className="mt-2 opacity-90">
-                Laporkan fasilitas yang rusak
-              </p>
-            </button>
+        <button className="bg-violet-600 hover:bg-violet-700 text-white rounded-3xl p-6 shadow-lg text-left transition">
 
-          </div>
+          <div className="text-5xl mb-3">📦</div>
 
-          {/* Statistik */}
-          <div className="grid grid-cols-12 gap-6 mb-8">
+          <h3 className="font-bold text-lg">
+            Pinjam Barang
+          </h3>
 
-            <div className="col-span-12 md:col-span-6 xl:col-span-3 bg-gradient-to-r from-violet-500 to-violet-700 text-white rounded-2xl p-6 shadow-lg">
-              <p>Total Pengajuan</p>
-              <h2 className="text-4xl font-bold mt-3">25</h2>
-            </div>
+          <p className="opacity-80 mt-2">
+            Ajukan peminjaman barang
+          </p>
 
-            <div className="col-span-12 md:col-span-6 xl:col-span-3 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-2xl p-6 shadow-lg">
-              <p>Menunggu Persetujuan</p>
-              <h2 className="text-4xl font-bold mt-3">3</h2>
-            </div>
+        </button>
 
-            <div className="col-span-12 md:col-span-6 xl:col-span-3 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-2xl p-6 shadow-lg">
-              <p>Sedang Dipinjam</p>
-              <h2 className="text-4xl font-bold mt-3">5</h2>
-            </div>
+        <button className="bg-blue-600 hover:bg-blue-700 text-white rounded-3xl p-6 shadow-lg text-left transition">
 
-            <div className="col-span-12 md:col-span-6 xl:col-span-3 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-2xl p-6 shadow-lg">
-              <p>Ditolak</p>
-              <h2 className="text-4xl font-bold mt-3">2</h2>
-            </div>
+          <div className="text-5xl mb-3">🏢</div>
 
-          </div>
+          <h3 className="font-bold text-lg">
+            Pinjam Ruangan
+          </h3>
 
-          {/* Pengajuan + Notifikasi */}
-          <div className="grid grid-cols-12 gap-6 mb-8">
+          <p className="opacity-80 mt-2">
+            Reservasi ruang dan fasilitas
+          </p>
 
-            <div className="col-span-12 xl:col-span-8 bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
+        </button>
 
-              <h2 className="text-xl font-bold mb-4">
-                Status Pengajuan Terbaru
-              </h2>
+        <button className="bg-green-600 hover:bg-green-700 text-white rounded-3xl p-6 shadow-lg text-left transition">
 
-              <table className="w-full">
+          <div className="text-5xl mb-3">🧪</div>
 
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3">Barang</th>
-                    <th className="text-left py-3">Tanggal</th>
-                    <th className="text-left py-3">Status</th>
-                  </tr>
-                </thead>
+          <h3 className="font-bold text-lg">
+            Pinjam Laboratorium
+          </h3>
 
-                <tbody>
+          <p className="opacity-80 mt-2">
+            Cek ketersediaan laboratorium
+          </p>
 
-                  <tr className="border-b">
-                    <td className="py-3">Proyektor Epson</td>
-                    <td>07 Juni 2026</td>
-                    <td>
-                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full">
-                        Disetujui
-                      </span>
-                    </td>
-                  </tr>
+        </button>
 
-                  <tr className="border-b">
-                    <td className="py-3">Laptop Asus</td>
-                    <td>08 Juni 2026</td>
-                    <td>
-                      <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full">
-                        Menunggu
-                      </span>
-                    </td>
-                  </tr>
+        <button className="bg-red-600 hover:bg-red-700 text-white rounded-3xl p-6 shadow-lg text-left transition">
 
-                  <tr>
-                    <td className="py-3">Kamera Canon</td>
-                    <td>09 Juni 2026</td>
-                    <td>
-                      <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full">
-                        Ditolak
-                      </span>
-                    </td>
-                  </tr>
+          <div className="text-5xl mb-3">🔧</div>
 
-                </tbody>
+          <h3 className="font-bold text-lg">
+            Lapor Kerusakan
+          </h3>
 
-              </table>
+          <p className="opacity-80 mt-2">
+            Laporkan fasilitas yang rusak
+          </p>
 
-            </div>
+        </button>
 
-            <div className="col-span-12 xl:col-span-4 bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
+      </div>
 
-              <h2 className="text-xl font-bold mb-4">
-                Notifikasi
-              </h2>
+      {/* Statistik */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
 
-              <div className="space-y-4">
+        <div className="bg-white rounded-3xl shadow-lg p-6">
+          <p className="text-gray-500">
+            Total Pengajuan
+          </p>
 
-                <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-                  ✅ Pengajuan Proyektor disetujui
-                </div>
+          <h2 className="text-4xl font-bold text-violet-600 mt-2">
+            25
+          </h2>
+        </div>
 
-                <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
-                  ⏳ Pengajuan Laptop sedang diproses
-                </div>
+        <div className="bg-white rounded-3xl shadow-lg p-6">
+          <p className="text-gray-500">
+            Menunggu
+          </p>
 
-                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                  📅 Pengembalian Proyektor besok
-                </div>
+          <h2 className="text-4xl font-bold text-yellow-500 mt-2">
+            3
+          </h2>
+        </div>
 
-              </div>
+        <div className="bg-white rounded-3xl shadow-lg p-6">
+          <p className="text-gray-500">
+            Disetujui
+          </p>
 
-            </div>
+          <h2 className="text-4xl font-bold text-green-500 mt-2">
+            18
+          </h2>
+        </div>
 
-          </div>
+        <div className="bg-white rounded-3xl shadow-lg p-6">
+          <p className="text-gray-500">
+            Ditolak
+          </p>
 
-          {/* Barang Populer */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-6 mb-8">
+          <h2 className="text-4xl font-bold text-red-500 mt-2">
+            4
+          </h2>
+        </div>
 
-            <h2 className="text-xl font-bold mb-4">
-              Barang yang Sering Dipinjam
-            </h2>
+      </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Ketersediaan Sarpras + Notifikasi */}
+     <div className="grid grid-cols-12 gap-6 mb-8">
 
-              <div className="border rounded-xl p-4 hover:shadow-lg transition">
-                <div className="text-6xl">📽️</div>
-                <h3 className="font-bold mt-3">
-                  Proyektor Epson
-                </h3>
-                <p className="text-gray-500">
-                  Tersedia 5 Unit
-                </p>
+  <div className="col-span-12 xl:col-span-8 bg-white rounded-3xl shadow-lg p-6">
 
-                <button className="mt-4 w-full bg-violet-600 text-white py-2 rounded-lg">
-                  Pinjam
-                </button>
-              </div>
+    <h2 className="text-2xl font-bold mb-4">
+      📅 Kalender Ketersediaan Sarpras
+    </h2>
 
-              <div className="border rounded-xl p-4 hover:shadow-lg transition">
-                <div className="text-6xl">💻</div>
-                <h3 className="font-bold mt-3">
-                  Laptop Asus
-                </h3>
-                <p className="text-gray-500">
-                  Tersedia 10 Unit
-                </p>
+    <FullCalendar
+      plugins={[dayGridPlugin, interactionPlugin]}
+      initialView="dayGridMonth"
+      locale="id"
+      height="650px"
+      events={events}
+      dateClick={(info) => {
+  setSelectedDate(info.dateStr);
+  setShowModal(true);
+}}
+      
+    />
 
-                <button className="mt-4 w-full bg-violet-600 text-white py-2 rounded-lg">
-                  Pinjam
-                </button>
-              </div>
+  </div>
 
-              <div className="border rounded-xl p-4 hover:shadow-lg transition">
-                <div className="text-6xl">📷</div>
-                <h3 className="font-bold mt-3">
-                  Kamera Canon
-                </h3>
-                <p className="text-gray-500">
-                  Tersedia 3 Unit
-                </p>
+  <div className="col-span-12 xl:col-span-4 bg-white rounded-3xl shadow-lg p-6">
 
-                <button className="mt-4 w-full bg-violet-600 text-white py-2 rounded-lg">
-                  Pinjam
-                </button>
-              </div>
+    <h2 className="text-xl font-bold mb-4">
+      📋 Keterangan Kalender
+    </h2>
 
-            </div>
+    <div className="space-y-4">
 
-          </div>
+      <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+        🟢 Barang atau ruangan tersedia
+      </div>
 
-          {/* Jadwal */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
+      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+        🔵 Sebagian tersedia
+      </div>
 
-            <h2 className="text-xl font-bold mb-4">
-              Jadwal Pengembalian Terdekat
-            </h2>
+      <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+        🔴 Tidak tersedia / penuh
+      </div>
 
-            <div className="space-y-3">
+      <div className="bg-violet-50 border-l-4 border-violet-500 p-4 rounded">
+        Klik tanggal untuk membuat pengajuan peminjaman
+      </div>
 
-              <div className="flex justify-between p-4 bg-gray-50 rounded-lg">
-                <span>💻 Laptop Asus</span>
-                <span className="font-semibold">
-                  12 Juni 2026
+    </div>
+
+  </div>
+
+</div>
+      {/* Status Peminjaman */}
+      <div className="bg-white rounded-3xl shadow-lg p-6 mb-8">
+
+        <h2 className="text-xl font-bold mb-4">
+          📋 Status Pengajuan Terbaru
+        </h2>
+
+        <table className="w-full">
+
+          <thead>
+            <tr className="border-b">
+              <th className="text-left py-3">Item</th>
+              <th className="text-left py-3">Tanggal</th>
+              <th className="text-left py-3">Status</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            <tr className="border-b">
+              <td className="py-3">Laptop Asus</td>
+              <td>10 Juni 2026</td>
+              <td>
+                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full">
+                  Disetujui
                 </span>
-              </div>
+              </td>
+            </tr>
 
-              <div className="flex justify-between p-4 bg-gray-50 rounded-lg">
-                <span>📽️ Proyektor Epson</span>
-                <span className="font-semibold">
-                  13 Juni 2026
+            <tr className="border-b">
+              <td className="py-3">Ruang Seminar</td>
+              <td>12 Juni 2026</td>
+              <td>
+                <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full">
+                  Menunggu
                 </span>
-              </div>
+              </td>
+            </tr>
 
-            </div>
+          </tbody>
 
+        </table>
+
+      </div>
+
+      {/* Jadwal Pengembalian */}
+      <div className="bg-white rounded-3xl shadow-lg p-6">
+
+        <h2 className="text-xl font-bold mb-4">
+          📅 Jadwal Pengembalian Terdekat
+        </h2>
+
+        <div className="space-y-3">
+
+          <div className="flex justify-between bg-gray-50 p-4 rounded-xl">
+            <span>💻 Laptop Asus</span>
+            <span className="font-bold">
+              20 Juni 2026
+            </span>
+          </div>
+
+          <div className="flex justify-between bg-gray-50 p-4 rounded-xl">
+            <span>📽️ Proyektor Epson</span>
+            <span className="font-bold">
+              22 Juni 2026
+            </span>
           </div>
 
         </div>
-      </main>
 
-      <Banner />
-    </>
-  );
+      </div>
+
+    </div>
+  </main>
+
+  {showModal && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+    <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+
+      <h2 className="text-2xl font-bold mb-2">
+        📅 {selectedDate}
+      </h2>
+
+      <p className="text-gray-500 mb-6">
+        Pilih jenis peminjaman yang ingin diajukan
+      </p>
+
+      <div className="space-y-4">
+
+        <button
+          onClick={() =>
+            navigate(
+              `/peminjam/peminjaman-barang?date=${selectedDate}`
+            )
+          }
+          className="w-full bg-violet-600 hover:bg-violet-700 text-white rounded-2xl p-4 text-left"
+        >
+          <div className="text-3xl mb-2">📦</div>
+          <h3 className="font-bold">
+            Peminjaman Barang
+          </h3>
+          <p className="text-sm opacity-80">
+            Laptop, Proyektor, Kamera, dll
+          </p>
+        </button>
+
+        <button
+          onClick={() =>
+            navigate(
+              `/peminjam/peminjaman-ruangan?date=${selectedDate}`
+            )
+          }
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-4 text-left"
+        >
+          <div className="text-3xl mb-2">🏢</div>
+          <h3 className="font-bold">
+            Peminjaman Ruangan
+          </h3>
+          <p className="text-sm opacity-80">
+            Kelas, Ruang Seminar, Aula
+          </p>
+        </button>
+
+        <button
+          onClick={() =>
+            navigate(
+              `/peminjam/peminjaman-laboratorium?date=${selectedDate}`
+            )
+          }
+          className="w-full bg-green-600 hover:bg-green-700 text-white rounded-2xl p-4 text-left"
+        >
+          <div className="text-3xl mb-2">🧪</div>
+          <h3 className="font-bold">
+            Peminjaman Laboratorium
+          </h3>
+          <p className="text-sm opacity-80">
+            Lab Komputer, Lab Mekatronika, dll
+          </p>
+        </button>
+
+      </div>
+
+      <button
+        onClick={() => setShowModal(false)}
+        className="w-full mt-5 border rounded-2xl py-3 hover:bg-gray-100"
+      >
+        Tutup
+      </button>
+
+    </div>
+
+  </div>
+)}
+
+  <Banner />
+</>
+
+
+);
 }
 
 export default DashboardPeminjam;
