@@ -25,6 +25,9 @@ import PeminjamanBarang from "./pages/pegawai/PeminjamanBarang";
 import PeminjamanRuangan from "./pages/pegawai/PeminjamanRuangan";
 import PeminjamanLaboratorium from "./pages/pegawai/PeminjamanLaboratorium";
 
+import DashboardPeminjam from "./pages/peminjam/DashboardPeminjam";
+import DetailPeminjaman from "./pages/pegawai/DetailPeminjaman";
+
 // Lazy Loading Auth
 const Login = lazy(() => import("./pages/auth/Login"));
 
@@ -50,6 +53,7 @@ function App() {
         <Route element={<MainLayout />}>
           {/* Dashboard */}
           <Route path="/" element={<Dashboard />} />
+           <Route path="/peminjam" element={<DashboardPeminjam />} />
 
           {/* Pegawai */}
           <Route path="/pegawai" element={<KelolaPegawai />} />
@@ -73,6 +77,11 @@ function App() {
             path="/peminjaman/laboratorium"
             element={<PeminjamanLaboratorium />}
           />
+
+          <Route
+  path="/pegawai/peminjaman/barang/:id"
+  element={<DetailPeminjaman />}
+/>
         </Route>
 
         {/* Auth Layout */}
