@@ -3,3 +3,7 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+src/pages/pegawai/server/pegawai.db
+src/pages/pegawai/server/pegawai.db-wal
+src/pages/pegawai/server/pegawai.db-shm
