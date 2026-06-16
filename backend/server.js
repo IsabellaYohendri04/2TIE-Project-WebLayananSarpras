@@ -9,6 +9,11 @@ const { attachAuthRoutes } = require("./routes/auth.routes");
 const { attachPegawaiRoutes } = require("./routes/pegawai.routes");
 const { attachFasilitasRoutes } = require("./routes/fasilitas.routes");
 const { attachPeminjamanRoutes } = require("./routes/peminjaman.routes");
+const { attachSarprasRoutes } = require("./routes/sarpras.routes");
+const { attachLaporanRoutes } = require("./routes/laporan.routes");
+const { attachPeminjamanRoutes } = require("./routes/peminjaman.routes");
+const { attachJanitorRoutes } = require("./routes/janitor.routes");
+
 
 const app = express();
 
@@ -23,6 +28,13 @@ attachAuthRoutes(app);
 attachPegawaiRoutes(app);
 attachFasilitasRoutes(app);
 attachPeminjamanRoutes(app);
+attachSarprasRoutes(app);
+attachLaporanRoutes(app);
+attachPeminjamanRoutes(app);
+attachJanitorRoutes(app);
+
+app.get("/api/peminjaman/barang", getBarangPeminjaman);
+app.get("/api/peminjaman/barang/:id", getBarangPeminjamanById);
 
 const PORT = process.env.PORT || 3001;
 

@@ -1,5 +1,6 @@
 const { getPool } = require("../config/db");
 
+<<<<<<< HEAD
 const TABLES = {
   barang: "peminjaman_barang",
   ruangan: "peminjaman_ruangan",
@@ -38,6 +39,28 @@ function formatRow(row, tipe) {
     detail: row.detail_json ? JSON.parse(row.detail_json) : {},
     laporanSelesai: !!row.laporan_selesai,
     createdAt: row.created_at,
+=======
+function formatDate(value) {
+  if (!value) return "";
+  return new Date(value).toISOString().slice(0, 10);
+}
+
+function formatPeminjamanRow(row) {
+  const approved = row.status === "Disetujui";
+
+  return {
+    id: row.id,
+    tipe: row.tipe,
+    item: row.item,
+    nama_peminjam: row.nama_peminjam,
+    peminjam: row.nama_peminjam,
+    barang: row.item,
+    tanggal_pinjam: formatDate(row.tanggal_pinjam),
+    tanggal: formatDate(row.tanggal_pinjam),
+    tanggal_kembali: formatDate(row.tanggal_kembali),
+    status: approved ? "APPROVED" : row.status,
+    status_asli: row.status,
+>>>>>>> 567df8493f6aca7aff1c087ae8364b9b38a2ffac
   };
 }
 
@@ -46,6 +69,7 @@ function attachPeminjamanRoutes(app) {
   const { authenticate, authorize } = auth;
   if (!authenticate || !authorize) return;
 
+<<<<<<< HEAD
   const sarprasOnly = [authenticate, authorize("pegawai_sarpras")];
   const peminjamCreate = [authenticate, authorize("peminjam", "janitor")];
   const readRoles = [authenticate, authorize("pegawai_sarpras", "janitor", "peminjam")];
@@ -80,10 +104,62 @@ function attachPeminjamanRoutes(app) {
       const results = (await Promise.all(queries)).flat();
       results.sort((a, b) => b.tanggalPinjam.localeCompare(a.tanggalPinjam));
       res.json(results);
+=======
+  const allowedRoles = authorize("janitor", "pegawai_sarpras", "peminjam");
+
+  app.get("/api/peminjaman", authenticate, allowedRoles, async (req, res) => {
+    try {
+      const { status } = req.query;
+      let statusFilter = null;
+
+      if (status) {
+        const normalized = status.toLowerCase();
+        if (normalized === "approved" || normalized === "disetujui") {
+          statusFilter = "Disetujui";
+        } else if (normalized === "pending" || normalized === "menunggu") {
+          statusFilter = "Menunggu";
+        } else if (normalized === "rejected" || normalized === "ditolak") {
+          statusFilter = "Ditolak";
+        } else {
+          statusFilter = status;
+        }
+      }
+
+      const pool = getPool();
+      let query = `
+        SELECT id, nama AS nama_peminjam, barang AS item, tanggal_pinjam, tanggal_kembali, status, 'barang' AS tipe
+        FROM peminjaman_barang
+        UNION ALL
+        SELECT id, nama, ruangan, tanggal_pinjam, tanggal_kembali, status, 'ruangan'
+        FROM peminjaman_ruangan
+        UNION ALL
+        SELECT id, nama, laboratorium, tanggal_pinjam, tanggal_kembali, status, 'laboratorium'
+        FROM peminjaman_laboratorium
+      `;
+
+      const params = [];
+      if (statusFilter) {
+        query = `
+          SELECT * FROM (${query}) AS peminjaman_gabungan
+          WHERE status = ?
+          ORDER BY tanggal_pinjam DESC
+        `;
+        params.push(statusFilter);
+      } else {
+        query = `
+          SELECT * FROM (${query}) AS peminjaman_gabungan
+          ORDER BY tanggal_pinjam DESC
+        `;
+      }
+
+      const [rows] = await pool.query(query, params);
+      res.json({ success: true, data: rows.map(formatPeminjamanRow) });
+>>>>>>> 567df8493f6aca7aff1c087ae8364b9b38a2ffac
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
   });
+<<<<<<< HEAD
 
   // Laporan kondisi — peminjaman yang sudah lewat tanggal kembali
   app.get("/api/peminjaman/laporan-kondisi", ...readRoles, async (req, res) => {
@@ -263,6 +339,8 @@ function attachPeminjamanRoutes(app) {
       }
     });
   }
+=======
+>>>>>>> 567df8493f6aca7aff1c087ae8364b9b38a2ffac
 }
 
 module.exports = { attachPeminjamanRoutes };
