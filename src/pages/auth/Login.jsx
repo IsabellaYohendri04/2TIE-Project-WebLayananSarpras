@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useAuth, ROLE_HOME } from "../context/AuthContext";
+import { useAuth, ROLE_HOME } from "../../context/AuthContext";
 
 function Login() {
   const navigate = useNavigate();

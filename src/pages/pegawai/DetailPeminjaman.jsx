@@ -10,11 +10,9 @@ function DetailPeminjaman() {
 
   useEffect(() => {
     axios
-      .get("/data/peminjaman-barang.json")
+      .get(`/api/peminjaman/barang/${id}`)
       .then((response) => {
-        const item = response.data.find((p) => p.id === Number(id));
-
-        setData(item);
+        setData(response.data);
       })
       .catch((err) => {
         console.error(err);

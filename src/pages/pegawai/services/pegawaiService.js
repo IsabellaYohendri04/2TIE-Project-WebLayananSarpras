@@ -1,4 +1,4 @@
-import api from "./authService";
+import api from "../../../services/authService";
 
 export const getPegawai = (params = {}) =>
   api.get("/pegawai", { params }).then((res) => res.data);

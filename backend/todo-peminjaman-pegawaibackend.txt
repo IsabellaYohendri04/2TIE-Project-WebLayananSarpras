@@ -1,0 +1,8 @@
+TODO (peminjaman pegawai):
+1) Update backend/server.js agar menggunakan pool + routing /api/auth dan /api/pegawai, bukan endpoint lama /api/barang.
+2) Tambahkan initDatabase() yang membuat tabel users + tabel minimal peminjaman barang/ruangan/laboratorium + seed opsional.
+3) Tambahkan route & endpoint: GET /api/peminjaman/barang dan GET /api/peminjaman/barang/:id (untuk dipakai PeminjamanBarang & DetailPeminjaman).
+4) Pastikan CORS, body parser, dan health endpoint ada.
+5) Update front-end pegawai: ganti axios dari /data/peminjaman-barang.json ke /api/peminjaman/barang dan detailnya.
+6) Jalankan backend + cek endpoint JSON.
+7) Jalankan Vite dan pastikan halaman pegawai tidak error.

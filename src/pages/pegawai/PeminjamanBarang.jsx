@@ -16,8 +16,8 @@ const [debouncedSearch, setDebouncedSearch] = useState("");
   // Ambil data sekali saat halaman dibuka
   // Ambil data sekali saat halaman dibuka
 useEffect(() => {
-  axios
-    .get("/data/peminjaman-barang.json")
+    axios
+    .get("/api/peminjaman/barang")
     .then((response) => {
       setDataPeminjaman(response.data);
       setFilteredData(response.data);
