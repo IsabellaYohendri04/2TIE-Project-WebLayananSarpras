@@ -12,6 +12,10 @@ const {
 
 const { attachAuthRoutes } = require("./routes/auth.routes");
 const { attachPegawaiRoutes } = require("./routes/pegawai.routes");
+const { attachSarprasRoutes } = require("./routes/sarpras.routes");
+const { attachLaporanRoutes } = require("./routes/laporan.routes");
+const { attachPeminjamanRoutes } = require("./routes/peminjaman.routes");
+const { attachJanitorRoutes } = require("./routes/janitor.routes");
 
 const app = express();
 
@@ -24,6 +28,10 @@ app.get("/api/health", (_req, res) => {
 
 attachAuthRoutes(app);
 attachPegawaiRoutes(app);
+attachSarprasRoutes(app);
+attachLaporanRoutes(app);
+attachPeminjamanRoutes(app);
+attachJanitorRoutes(app);
 
 app.get("/api/peminjaman/barang", getBarangPeminjaman);
 app.get("/api/peminjaman/barang/:id", getBarangPeminjamanById);

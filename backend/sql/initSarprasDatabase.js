@@ -117,6 +117,38 @@ async function initSarprasDatabase() {
     )
   `);
 
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS sarpras (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      nama VARCHAR(200) NOT NULL,
+      kategori VARCHAR(100) NOT NULL,
+      tipe ENUM('barang', 'ruangan', 'laboratorium') NOT NULL DEFAULT 'barang',
+      status ENUM('Tersedia', 'Dipinjam', 'Dipakai', 'Rusak', 'Maintenance') NOT NULL DEFAULT 'Tersedia',
+      lokasi VARCHAR(200) NULL,
+      kondisi_teks TEXT NULL,
+      kondisi_image VARCHAR(500) NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS laporan_kerusakan (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      sarpras_id INT NULL,
+      barang VARCHAR(200) NOT NULL,
+      pelapor VARCHAR(100) NOT NULL,
+      pelapor_id INT NULL,
+      isi_laporan TEXT NOT NULL,
+      status ENUM('MENUNGGU', 'DIPROSES', 'SELESAI', 'DITOLAK') NOT NULL DEFAULT 'MENUNGGU',
+      image VARCHAR(500) NULL,
+      tanggal DATE NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (sarpras_id) REFERENCES sarpras(id) ON DELETE SET NULL
+    )
+  `);
+
   const [barangCountRows] = await db.query(
     "SELECT COUNT(*) as total FROM peminjaman_barang"
   );
@@ -182,6 +214,73 @@ async function initSarprasDatabase() {
         "081298765432",
         "aktif",
       ]
+    );
+  }
+
+  const [sarprasCountRows] = await db.query("SELECT COUNT(*) as total FROM sarpras");
+  if (sarprasCountRows[0].total === 0) {
+    const seedSarpras = [
+      ["Laptop Asus VivoBook", "Elektronik", "barang", "Dipinjam", "Lab Komputer 1", "Normal saat dipinjam", "https://images.unsplash.com/photo-1517336714731-489689fd1ca8"],
+      ["Proyektor Epson", "Elektronik", "barang", "Tersedia", "Gudang", "Baik", "https://images.unsplash.com/photo-1527443154391-507e9dc6c5cc"],
+      ["AC Ruangan", "Elektronik", "barang", "Rusak", "Gedung A", "Bocor & tidak dingin", "https://images.unsplash.com/photo-1581091870622-2c8f3f5b3a07"],
+      ["Kursi Kuliah", "Furnitur", "barang", "Dipinjam", "Ruang 204", "Sedikit retak pada kaki", "https://images.unsplash.com/photo-1582582494700-5fdbec1c5b0c"],
+      ["Ruang Seminar", "Ruangan", "ruangan", "Dipakai", "Gedung B Lantai 2", "Kapasitas 100 orang", "https://images.unsplash.com/photo-1497366216548-37526070297c"],
+      ["Lab Komputer", "Laboratorium", "laboratorium", "Dipakai", "Gedung C", "30 unit PC aktif", "https://images.unsplash.com/photo-1517694712202-14dd9538aa97"],
+      ["Speaker JBL", "Audio", "barang", "Tersedia", "Gudang", "Kondisi baik", "https://via.placeholder.com/300x200?text=Speaker"],
+      ["Drone DJI Mini 4", "Multimedia", "barang", "Tersedia", "Gudang", "Siap pakai", "https://via.placeholder.com/300x200?text=Drone"],
+    ];
+
+    for (const item of seedSarpras) {
+      await db.query(
+        `INSERT INTO sarpras (nama, kategori, tipe, status, lokasi, kondisi_teks, kondisi_image)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        item
+      );
+    }
+  }
+
+  const [laporanCountRows] = await db.query(
+    "SELECT COUNT(*) as total FROM laporan_kerusakan"
+  );
+  if (laporanCountRows[0].total === 0) {
+    const seedLaporan = [
+      [1, "Laptop Asus VivoBook", "Andi Saputra", "Layar tidak menyala setelah digunakan", "MENUNGGU", "https://images.unsplash.com/photo-1517336714731-489689fd1ca8", "2026-06-10"],
+      [2, "Proyektor Epson", "Siti Rahma", "Gambar buram dan tidak fokus", "DIPROSES", "https://images.unsplash.com/photo-1527443154391-507e9dc6c5cc", "2026-06-11"],
+      [3, "AC Ruangan", "Budi Santoso", "AC bocor dan tidak dingin", "SELESAI", "https://images.unsplash.com/photo-1581091870622-2c8f3f5b3a07", "2026-06-12"],
+      [null, "Kursi Kuliah", "Intan Permata", "Kaki kursi patah saat dipindahkan", "MENUNGGU", "https://images.unsplash.com/photo-1582582494700-5fdbec1c5b0c", "2026-06-14"],
+    ];
+
+    for (const item of seedLaporan) {
+      await db.query(
+        `INSERT INTO laporan_kerusakan
+          (sarpras_id, barang, pelapor, isi_laporan, status, image, tanggal)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        item
+      );
+    }
+  }
+
+  const [ruanganCountRows] = await db.query(
+    "SELECT COUNT(*) as total FROM peminjaman_ruangan"
+  );
+  if (ruanganCountRows[0].total === 0) {
+    await db.query(
+      `INSERT INTO peminjaman_ruangan
+        (nama, nim, prodi, ruangan, kategori, tanggal_pinjam, tanggal_kembali, status, catatan_admin)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ["Rizky Pratama", "233510105", "Teknik Informatika", "Ruang Seminar", "Ruangan", "2026-06-15", "2026-06-16", "Disetujui", "Disetujui pegawai sarpras"]
+    );
+  }
+
+  const [labCountRows] = await db.query(
+    "SELECT COUNT(*) as total FROM peminjaman_laboratorium"
+  );
+  if (labCountRows[0].total === 0) {
+    await db.query(
+      `INSERT INTO peminjaman_laboratorium
+        (nama, nim, prodi, laboratorium, kategori, tanggal_pinjam, tanggal_kembali, status, catatan_admin)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ["Dewi Lestari", "233510106", "Teknik Elektro", "Lab Komputer", "Laboratorium", "2026-06-18", "2026-06-20", "Disetujui", "Disetujui pegawai sarpras"]
     );
   }
 

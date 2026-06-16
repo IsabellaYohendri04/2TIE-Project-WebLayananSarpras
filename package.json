@@ -1,50 +1,13 @@
 {
-  "name": "mosaic-react",
-  "version": "0.1.0",
-  "type": "module",
+  "name": "2TIE-Project-WebLayananSarpras",
+  "version": "1.0.0",
+  "private": true,
   "scripts": {
-    "dev": "vite",
-    "server": "npm run start --prefix backend",
-    "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@fullcalendar/daygrid": "^6.1.20",
-    "@fullcalendar/google-calendar": "^6.1.20",
-    "@fullcalendar/interaction": "^6.1.20",
-    "@fullcalendar/react": "^6.1.20",
-    "@radix-ui/react-popover": "^1.1.2",
-    "@tailwindcss/forms": "^0.5.7",
-    "axios": "^1.18.0",
-    "bcryptjs": "^2.4.3",
-    "chart.js": "^4.4.1",
-    "chartjs-adapter-moment": "^1.0.1",
-    "clsx": "^2.1.1",
-    "concurrently": "^9.1.2",
-    "cors": "^2.8.5",
-    "date-fns": "^4.1.0",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "jsonwebtoken": "^9.0.2",
-    "moment": "^2.29.4",
-    "mysql2": "^3.12.0",
-    "react": "^19.0.0",
-    "react-calendar": "^6.0.1",
-    "react-day-picker": "^9.4.1",
-    "react-dom": "^19.0.0",
-    "react-icons": "^5.6.0",
-    "react-router-dom": "^7.0.2",
-    "react-transition-group": "^4.4.5",
-    "react-tsparticles": "^2.12.2",
-    "tailwind-merge": "^2.5.5",
-    "tsparticles": "^4.1.3"
+    "frontend": "npm run dev --prefix frontend",
+    "backend": "npm start --prefix backend",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\""
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.0.0",
-    "@vitejs/plugin-react": "^4.2.1",
-    "postcss": "^8.4.32",
-    "tailwindcss": "^4.0.0",
-    "vite": "^6.0.3"
+    "concurrently": "^9.0.0"
   }
 }
