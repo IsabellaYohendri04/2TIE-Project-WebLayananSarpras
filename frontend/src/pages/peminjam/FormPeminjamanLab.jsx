@@ -1,6 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { getLaboratoriumById, getGedung, getLaboratorium } from "../../services/fasilitasService";
+import { createPeminjamanLaboratorium } from "../../services/peminjamanService";
+import { usePeminjamanBase } from "../../hooks/usePeminjamanBase";
 import {
   PageShell,
   PageHeader,
@@ -14,15 +18,125 @@ import {
 function FormPeminjamanLab() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { base } = usePeminjamanBase();
   const tanggalKalender = searchParams.get("date");
+  const labIdParam = searchParams.get("labId");
+  const gedungParam = searchParams.get("gedung");
   const [step, setStep] = useState(1);
+  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [labFromApi, setLabFromApi] = useState(null);
+  const [gedungList, setGedungList] = useState([]);
+  const [labList, setLabList] = useState([]);
 
-  const [gedung, setGedung] = useState("");
-const [tanggalSelesai, setTanggalSelesai] = useState("");
-const [jamMulai, setJamMulai] = useState("");
-const [jamSelesai, setJamSelesai] = useState("");
+  const [form, setForm] = useState({
+    nama: user?.nama || "",
+    nim: user?.nim || "",
+    prodi: user?.prodi || "",
+    dosenPembimbing: "",
+    namaKegiatan: "",
+    gedung: "",
+    laboratorium: "",
+    tanggalMulai: tanggalKalender || "",
+    tanggalSelesai: "",
+    jamMulai: "",
+    jamSelesai: "",
+  });
 
-const labByGedung = {
+  useEffect(() => {
+    getGedung().then(setGedungList).catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (labIdParam) {
+      getLaboratoriumById(labIdParam).then(setLabFromApi).catch(console.error);
+    }
+  }, [labIdParam]);
+
+  useEffect(() => {
+    if (form.gedung) {
+      const params = { gedung: form.gedung };
+      if (["gedung-utama", "gedung-serba-guna"].includes(form.gedung)) {
+        params.lantai = 3;
+      } else if (["workshop-listrik", "workshop-mesin"].includes(form.gedung)) {
+        params.lantai = 2;
+      }
+      getLaboratorium(params).then(setLabList).catch(console.error);
+    }
+  }, [form.gedung]);
+
+  useEffect(() => {
+    if (gedungParam && !labIdParam) {
+      setForm((prev) => ({ ...prev, gedung: gedungParam }));
+    }
+  }, [gedungParam, labIdParam]);
+
+  useEffect(() => {
+    if (labFromApi) {
+      setForm((prev) => ({
+        ...prev,
+        gedung: labFromApi.gedungSlug,
+        laboratorium: labFromApi.nama,
+      }));
+    }
+  }, [labFromApi]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.laboratorium || !form.tanggalMulai) {
+      alert("Laboratorium dan tanggal wajib diisi");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await createPeminjamanLaboratorium({
+        nama: form.nama,
+        nim: form.nim,
+        prodi: form.prodi,
+        laboratorium: `${form.laboratorium}${labFromApi ? ` (${labFromApi.kode})` : ""}`,
+        kategori: "Laboratorium",
+        tanggalPinjam: form.tanggalMulai,
+        tanggalKembali: form.tanggalSelesai || form.tanggalMulai,
+        jamMulai: form.jamMulai,
+        jamSelesai: form.jamSelesai,
+        detail: {
+          dosenPembimbing: form.dosenPembimbing,
+          namaKegiatan: form.namaKegiatan,
+          labId: labFromApi?.id,
+          gedung: labFromApi?.gedungNama || form.gedung,
+        },
+      });
+      setSubmitted(true);
+    } catch (err) {
+      alert(err.response?.data?.message || "Gagal mengirim pengajuan");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <PageShell>
+        <ContentCard className="max-w-xl mx-auto text-center py-16">
+          <div className="text-5xl mb-4">✅</div>
+          <h2 className="text-2xl font-bold mb-4">Pengajuan Lab Berhasil!</h2>
+          <button onClick={() => navigate(`${base}/riwayat-peminjaman`)} className="px-6 py-3 bg-violet-600 text-white rounded-xl mr-3">Lihat Riwayat</button>
+          <button onClick={() => navigate(base)} className="px-6 py-3 bg-slate-100 rounded-xl">Dashboard</button>
+        </ContentCard>
+      </PageShell>
+    );
+  }
+
+  const labByGedung = labList.reduce((acc, lab) => {
+    const key = lab.gedungNama || form.gedung;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(lab.nama);
+    return acc;
+  }, {});
+
+  // fallback jika belum load dari API
+  const fallbackLabByGedung = {
   "Gedung Utama": [
     "Lab 151",
     "Lab 152",
@@ -42,6 +156,8 @@ const labByGedung = {
     "Lab Jaringan",
   ],
 };
+
+  const labsForSelect = Object.keys(labByGedung).length ? labByGedung : fallbackLabByGedung;
 
   const kebutuhanAlat = [
     "PC Komputer",
@@ -141,64 +257,23 @@ const labByGedung = {
       </div>
 
       <ContentCard>
-        <form onSubmit={(e) => e.preventDefault()}>
+        <form onSubmit={handleSubmit}>
          {step === 1 && (
           <>
     <FormSection title="Data Peminjam" icon="👤">
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Nama Ketua Kegiatan</label>
-          <input type="text" placeholder="Nama ketua kegiatan" className={inputClass} />
+          <input type="text" value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} className={inputClass} />
         </div>
-
         <div>
           <label className={labelClass}>NIM</label>
-          <input type="text" placeholder="233510101" className={inputClass} />
+          <input type="text" value={form.nim} onChange={(e) => setForm({ ...form, nim: e.target.value })} className={inputClass} />
         </div>
-
         <div>
           <label className={labelClass}>Program Studi</label>
-          <input type="text" placeholder="Teknik Informatika" className={inputClass} />
+          <input type="text" value={form.prodi} onChange={(e) => setForm({ ...form, prodi: e.target.value })} className={inputClass} />
         </div>
-
-        <div>
-          <label className={labelClass}>Nomor HP</label>
-          <input type="text" placeholder="08xxxxxxxxxx" className={inputClass} />
-        </div>
-
-        <div className="md:col-span-2">
-          <label className={labelClass}>Email</label>
-          <input type="email" placeholder="email@student.pcr.ac.id" className={inputClass} />
-        </div>
-      </div>
-    </FormSection>
-
-    <FormSection title="Organisasi / Himpunan" icon="🏛️">
-      <div className="grid md:grid-cols-2 gap-4">
-
-        <div>
-          <label className={labelClass}>Organisasi</label>
-
-          <select className={selectClass}>
-            <option>Pilih Organisasi</option>
-            <option>ITSA</option>
-            <option>HIMA Teknik Informatika</option>
-            <option>HIMA Teknik Elektro</option>
-            <option>BEM PCR</option>
-            <option>UKM</option>
-          </select>
-        </div>
-
-        <div>
-          <label className={labelClass}>Penanggung Jawab</label>
-
-          <input
-            type="text"
-            placeholder="Nama penanggung jawab kegiatan"
-            className={inputClass}
-          />
-        </div>
-
       </div>
     </FormSection>
   </>
@@ -207,39 +282,16 @@ const labByGedung = {
 {step === 2 && (
   <>
     <FormSection title="Data Kegiatan" icon="📋">
-
       <div className="space-y-4">
-
         <div>
           <label className={labelClass}>Nama Kegiatan</label>
-          <input
-            type="text"
-            placeholder="Nama kegiatan"
-            className={inputClass}
-          />
+          <input type="text" value={form.namaKegiatan} onChange={(e) => setForm({ ...form, namaKegiatan: e.target.value })} className={inputClass} />
         </div>
-
-        <div>
-          <label className={labelClass}>Deskripsi Kegiatan</label>
-          <textarea
-            rows="4"
-            placeholder="Deskripsi kegiatan"
-            className={inputClass}
-          />
-        </div>
-
         <div>
           <label className={labelClass}>Dosen Pembimbing</label>
-
-          <input
-            type="text"
-            placeholder="Nama dosen pembimbing"
-            className={inputClass}
-          />
+          <input type="text" value={form.dosenPembimbing} onChange={(e) => setForm({ ...form, dosenPembimbing: e.target.value })} className={inputClass} />
         </div>
-
       </div>
-
     </FormSection>
   </>
 )}
@@ -247,137 +299,64 @@ const labByGedung = {
 {step === 3 && (
   <>
     <FormSection title="Jadwal Penggunaan Laboratorium" icon="📅">
-
       <div className="grid md:grid-cols-2 gap-4">
-
         <div>
-          <label className={labelClass}>
-            Tanggal Mulai
-          </label>
-
-          <input
-            type="date"
-            value={tanggalKalender || ""}
-            readOnly
-            className={`${inputClass} bg-slate-100`}
-          />
+          <label className={labelClass}>Tanggal Mulai</label>
+          <input type="date" value={form.tanggalMulai} onChange={(e) => setForm({ ...form, tanggalMulai: e.target.value })} className={inputClass} />
         </div>
-
         <div>
-          <label className={labelClass}>
-            Tanggal Selesai
-          </label>
-
-          <input
-            type="date"
-            value={tanggalSelesai}
-            onChange={(e) =>
-              setTanggalSelesai(e.target.value)
-            }
-            className={inputClass}
-          />
+          <label className={labelClass}>Tanggal Selesai</label>
+          <input type="date" value={form.tanggalSelesai} onChange={(e) => setForm({ ...form, tanggalSelesai: e.target.value })} className={inputClass} />
         </div>
-
         <div>
-          <label className={labelClass}>
-            Jam Mulai
-          </label>
-
-          <input
-            type="time"
-            value={jamMulai}
-            onChange={(e) =>
-              setJamMulai(e.target.value)
-            }
-            className={inputClass}
-          />
+          <label className={labelClass}>Jam Mulai</label>
+          <input type="time" value={form.jamMulai} onChange={(e) => setForm({ ...form, jamMulai: e.target.value })} className={inputClass} />
         </div>
-
         <div>
-          <label className={labelClass}>
-            Jam Selesai
-          </label>
-
-          <input
-            type="time"
-            value={jamSelesai}
-            min={
-              tanggalKalender === tanggalSelesai
-                ? jamMulai
-                : undefined
-            }
-            onChange={(e) =>
-              setJamSelesai(e.target.value)
-            }
-            className={inputClass}
-          />
+          <label className={labelClass}>Jam Selesai</label>
+          <input type="time" value={form.jamSelesai} onChange={(e) => setForm({ ...form, jamSelesai: e.target.value })} className={inputClass} />
         </div>
-
       </div>
-
     </FormSection>
 
     <FormSection title="Laboratorium" icon="🧪">
-
+      {labFromApi ? (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+          <p className="text-sm text-emerald-700">Laboratorium dipilih:</p>
+          <p className="font-bold text-emerald-900">{labFromApi.kode} — {labFromApi.nama}</p>
+          <p className="text-sm text-emerald-600">{labFromApi.gedungNama}</p>
+        </div>
+      ) : (
       <div className="grid md:grid-cols-2 gap-4">
-
         <div>
           <label className={labelClass}>Gedung</label>
-
           <select
             className={selectClass}
-            value={gedung}
-            onChange={(e) =>
-              setGedung(e.target.value)
-            }
+            value={form.gedung}
+            onChange={(e) => setForm({ ...form, gedung: e.target.value, laboratorium: "" })}
           >
-            <option value="">
-              Pilih Gedung
-            </option>
-
-            <option value="Gedung Utama">
-              Gedung Utama
-            </option>
-
-            <option value="Workshop">
-              Workshop
-            </option>
-
-            <option value="GSG">
-              GSG
-            </option>
+            <option value="">Pilih Gedung</option>
+            {gedungList.map((g) => (
+              <option key={g.id} value={g.slug}>{g.nama}</option>
+            ))}
           </select>
         </div>
-
         <div>
-          <label className={labelClass}>
-            Laboratorium
-          </label>
-
+          <label className={labelClass}>Laboratorium</label>
           <select
             className={selectClass}
-            disabled={!gedung}
+            disabled={!form.gedung}
+            value={form.laboratorium}
+            onChange={(e) => setForm({ ...form, laboratorium: e.target.value })}
           >
-            <option>
-              {gedung
-                ? "Pilih Laboratorium"
-                : "Pilih Gedung Terlebih Dahulu"}
-            </option>
-
-            {gedung &&
-              labByGedung[gedung].map((lab) => (
-                <option
-                  key={lab}
-                  value={lab}
-                >
-                  {lab}
-                </option>
-              ))}
+            <option value="">{form.gedung ? "Pilih Laboratorium" : "Pilih Gedung Terlebih Dahulu"}</option>
+            {labList.map((lab) => (
+              <option key={lab.id} value={lab.nama}>{lab.kode} — {lab.nama}</option>
+            ))}
           </select>
         </div>
-
       </div>
-
+      )}
     </FormSection>
 
     <FormSection title="Kebutuhan Alat" icon="🔧">
@@ -488,6 +467,7 @@ const labByGedung = {
 
     <button
       type="submit"
+      disabled={submitting}
       className="
         px-8 py-3
         rounded-xl
@@ -497,9 +477,10 @@ const labByGedung = {
         text-white
         hover:scale-105
         transition
+        disabled:opacity-50
       "
     >
-      Ajukan Peminjaman
+      {submitting ? "Mengirim..." : "Ajukan Peminjaman"}
     </button>
 
   )}

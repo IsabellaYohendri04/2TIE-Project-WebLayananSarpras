@@ -1,5 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { getRuanganById } from "../../services/fasilitasService";
+import { createPeminjamanRuangan } from "../../services/peminjamanService";
+import { usePeminjamanBase } from "../../hooks/usePeminjamanBase";
 import {
   PageShell,
   PageHeader,
@@ -207,19 +211,26 @@ function StepIndicator({ currentStep }) {
 function FormPeminjamanRuangan() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { base } = usePeminjamanBase();
   const tanggalKalender = searchParams.get("date");
+  const ruanganIdParam = searchParams.get("ruanganId");
+  const gedungParam = searchParams.get("gedung");
 
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [proposalName, setProposalName] = useState("");
+  const [ruanganFromApi, setRuanganFromApi] = useState(null);
 
   const [form, setForm] = useState({
-    nama: "",
-    nim: "",
-    prodi: "",
-    noHp: "",
-    email: "",
+    nama: user?.nama || "",
+    nim: user?.nim || "",
+    prodi: user?.prodi || "",
+    noHp: user?.no_hp || "",
+    email: user?.email || "",
     organisasi: "",
     penanggungJawab: "",
     namaKegiatan: "",
@@ -230,23 +241,51 @@ function FormPeminjamanRuangan() {
     tanggalSelesai: "",
     jamMulai: "",
     jamSelesai: "",
-    gedungId: "",
-    ruanganId: "",
+    gedungId: gedungParam || "",
+    ruanganId: ruanganIdParam || "",
     fasilitasTambahan: [],
     pernyataan: false,
   });
 
+  useEffect(() => {
+    if (user) {
+      setForm((prev) => ({
+        ...prev,
+        nama: prev.nama || user.nama || "",
+        nim: prev.nim || user.nim || "",
+        prodi: prev.prodi || user.prodi || "",
+        noHp: prev.noHp || user.no_hp || "",
+        email: prev.email || user.email || "",
+      }));
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (ruanganIdParam) {
+      getRuanganById(ruanganIdParam)
+        .then((data) => {
+          setRuanganFromApi(data);
+          setForm((prev) => ({
+            ...prev,
+            gedungId: data.gedungSlug,
+            ruanganId: String(data.id),
+          }));
+        })
+        .catch(console.error);
+    }
+  }, [ruanganIdParam]);
+
   const gedungTerpilih = form.gedungId ? GEDUNG_DATA[form.gedungId] : null;
 
-  const ruanganList = useMemo(
-    () => gedungTerpilih?.ruangan ?? [],
-    [gedungTerpilih]
-  );
+  const ruanganList = useMemo(() => {
+    if (ruanganFromApi && ruanganIdParam) return [ruanganFromApi];
+    return gedungTerpilih?.ruangan ?? [];
+  }, [gedungTerpilih, ruanganFromApi, ruanganIdParam]);
 
-  const ruanganTerpilih = useMemo(
-    () => ruanganList.find((r) => r.id === form.ruanganId) ?? null,
-    [ruanganList, form.ruanganId]
-  );
+  const ruanganTerpilih = useMemo(() => {
+    if (ruanganFromApi) return ruanganFromApi;
+    return ruanganList.find((r) => r.id === form.ruanganId || String(r.id) === form.ruanganId) ?? null;
+  }, [ruanganList, form.ruanganId, ruanganFromApi]);
 
   const kapasitasWarning = useMemo(() => {
     if (!ruanganTerpilih || !form.jumlahPeserta) return null;
@@ -315,8 +354,8 @@ function FormPeminjamanRuangan() {
     }
 
     if (currentStep === 3) {
-      if (!form.gedungId) newErrors.gedungId = "Pilih gedung terlebih dahulu";
-      if (!form.ruanganId) newErrors.ruanganId = "Pilih ruangan";
+      if (!ruanganFromApi && !form.gedungId) newErrors.gedungId = "Pilih gedung terlebih dahulu";
+      if (!form.ruanganId && !ruanganFromApi) newErrors.ruanganId = "Pilih ruangan";
       if (ruanganTerpilih?.status === "penuh") {
         newErrors.ruanganId = "Ruangan ini sedang penuh, pilih ruangan lain";
       }
@@ -337,10 +376,44 @@ function FormPeminjamanRuangan() {
 
   const prevStep = () => setStep((s) => Math.max(s - 1, 1));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateStep(4)) return;
-    setSubmitted(true);
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      const ruangLabel = ruanganTerpilih?.nama || ruanganTerpilih?.kode || "Ruangan";
+      await createPeminjamanRuangan({
+        nama: form.nama,
+        nim: form.nim,
+        prodi: form.prodi,
+        ruangan: `${ruangLabel} (${ruanganTerpilih?.kode || ""})`,
+        kategori: ruanganTerpilih?.tipe === "kelas" ? "Kelas" : "Ruangan",
+        tanggalPinjam: form.tanggalMulai,
+        tanggalKembali: form.tanggalSelesai,
+        jamMulai: form.jamMulai,
+        jamSelesai: form.jamSelesai,
+        organisasi: form.organisasi,
+        detail: {
+          namaKegiatan: form.namaKegiatan,
+          jenisKegiatan: form.jenisKegiatan,
+          jumlahPeserta: form.jumlahPeserta,
+          deskripsi: form.deskripsi,
+          penanggungJawab: form.penanggungJawab,
+          noHp: form.noHp,
+          email: form.email,
+          fasilitasTambahan: form.fasilitasTambahan,
+          proposal: proposalName,
+          ruanganId: ruanganTerpilih?.id,
+          gedung: ruanganTerpilih?.gedungNama || gedungTerpilih?.nama,
+        },
+      });
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(err.response?.data?.message || "Gagal mengirim pengajuan");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -353,20 +426,20 @@ function FormPeminjamanRuangan() {
           <h2 className="text-3xl font-bold text-gray-800 mb-3">Pengajuan Berhasil Dikirim!</h2>
           <p className="text-gray-500 mb-2">
             Peminjaman <strong>{ruanganTerpilih?.nama}</strong> di{" "}
-            <strong>{gedungTerpilih?.nama}</strong>
+            <strong>{ruanganTerpilih?.gedungNama || gedungTerpilih?.nama}</strong>
           </p>
           <p className="text-gray-500 mb-8">
             {form.tanggalMulai} — {form.tanggalSelesai} · {form.jamMulai} - {form.jamSelesai}
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <button
-              onClick={() => navigate("/peminjam/riwayat-peminjaman")}
+              onClick={() => navigate(`${base}/riwayat-peminjaman`)}
               className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition"
             >
               Lihat Riwayat
             </button>
             <button
-              onClick={() => navigate("/peminjam")}
+              onClick={() => navigate(base)}
               className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-xl font-medium transition"
             >
               Kembali ke Dashboard
@@ -939,7 +1012,7 @@ function FormPeminjamanRuangan() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => navigate("/peminjam")}
+                  onClick={() => navigate(base)}
                   className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-xl font-medium transition"
                 >
                   Batal

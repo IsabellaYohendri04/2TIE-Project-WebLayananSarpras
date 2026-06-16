@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   PageShell,
   PageHeader,
@@ -7,54 +7,30 @@ import {
   DataTable,
   inputClass,
 } from "./components/PeminjamLayout";
+import { getRiwayatPeminjaman } from "../../services/peminjamanService";
 
 function RiwayatPeminjaman() {
   const [search, setSearch] = useState("");
+  const [dataRiwayat, setDataRiwayat] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const dataRiwayat = [
-    {
-      id: 1,
-      nama: "Laptop Asus VivoBook",
-      kategori: "Barang",
-      tanggalPinjam: "2026-06-13",
-      tanggalKembali: "2026-06-15",
-      status: "Selesai",
-    },
-    {
-      id: 2,
-      nama: "Ruang Seminar",
-      kategori: "Ruangan",
-      tanggalPinjam: "2026-06-20",
-      tanggalKembali: "2026-06-21",
-      status: "Selesai",
-    },
-    {
-      id: 3,
-      nama: "Laboratorium Jaringan",
-      kategori: "Laboratorium",
-      tanggalPinjam: "2026-07-01",
-      tanggalKembali: "2026-07-02",
-      status: "Diproses",
-    },
-    {
-      id: 4,
-      nama: "Proyektor Epson",
-      kategori: "Barang",
-      tanggalPinjam: "2026-05-10",
-      tanggalKembali: "2026-05-12",
-      status: "Ditolak",
-    },
-  ];
+  useEffect(() => {
+    getRiwayatPeminjaman()
+      .then(setDataRiwayat)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
 
   const filteredData = dataRiwayat.filter((item) =>
-    item.nama.toLowerCase().includes(search.toLowerCase())
+    (item.item || "").toLowerCase().includes(search.toLowerCase()) ||
+    (item.nama || "").toLowerCase().includes(search.toLowerCase())
   );
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Selesai":
+      case "Disetujui":
         return "bg-green-100 text-green-700";
-      case "Diproses":
+      case "Menunggu":
         return "bg-yellow-100 text-yellow-700";
       case "Ditolak":
         return "bg-red-100 text-red-700";
@@ -64,7 +40,7 @@ function RiwayatPeminjaman() {
   };
 
   const columns = [
-    { key: "nama", label: "Nama Sarpras" },
+    { key: "item", label: "Nama Sarpras" },
     { key: "kategori", label: "Kategori" },
     { key: "tanggalPinjam", label: "Tanggal Pinjam" },
     { key: "tanggalKembali", label: "Tanggal Kembali" },
@@ -76,16 +52,6 @@ function RiwayatPeminjaman() {
         <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(row.status)}`}>
           {row.status}
         </span>
-      ),
-    },
-    {
-      key: "aksi",
-      label: "Aksi",
-      align: "center",
-      render: () => (
-        <button className="text-violet-600 hover:text-violet-800 font-medium text-sm">
-          Detail
-        </button>
       ),
     },
   ];
@@ -100,13 +66,13 @@ function RiwayatPeminjaman() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatCard label="Total Peminjaman" value={dataRiwayat.length} color="violet" />
         <StatCard
-          label="Selesai"
-          value={dataRiwayat.filter((i) => i.status === "Selesai").length}
+          label="Disetujui"
+          value={dataRiwayat.filter((i) => i.status === "Disetujui").length}
           color="green"
         />
         <StatCard
-          label="Diproses"
-          value={dataRiwayat.filter((i) => i.status === "Diproses").length}
+          label="Menunggu"
+          value={dataRiwayat.filter((i) => i.status === "Menunggu").length}
           color="yellow"
         />
       </div>
@@ -122,11 +88,15 @@ function RiwayatPeminjaman() {
           />
         </div>
 
-        <DataTable
-          columns={columns}
-          data={filteredData}
-          emptyMessage="Tidak ada riwayat peminjaman ditemukan."
-        />
+        {loading ? (
+          <p className="text-center text-gray-500 py-8">Memuat riwayat...</p>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={filteredData}
+            emptyMessage="Tidak ada riwayat peminjaman ditemukan."
+          />
+        )}
       </ContentCard>
     </PageShell>
   );

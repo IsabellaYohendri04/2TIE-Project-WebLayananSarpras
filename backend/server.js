@@ -5,13 +5,10 @@ const cors = require("cors");
 
 const { initSarprasDatabase } = require("./sql/initSarprasDatabase");
 const { testConnection } = require("./config/db");
-const {
-  getBarangPeminjaman,
-  getBarangPeminjamanById,
-} = require("./routes/peminjamanBarang.routes");
-
 const { attachAuthRoutes } = require("./routes/auth.routes");
 const { attachPegawaiRoutes } = require("./routes/pegawai.routes");
+const { attachFasilitasRoutes } = require("./routes/fasilitas.routes");
+const { attachPeminjamanRoutes } = require("./routes/peminjaman.routes");
 
 const app = express();
 
@@ -24,9 +21,8 @@ app.get("/api/health", (_req, res) => {
 
 attachAuthRoutes(app);
 attachPegawaiRoutes(app);
-
-app.get("/api/peminjaman/barang", getBarangPeminjaman);
-app.get("/api/peminjaman/barang/:id", getBarangPeminjamanById);
+attachFasilitasRoutes(app);
+attachPeminjamanRoutes(app);
 
 const PORT = process.env.PORT || 3001;
 

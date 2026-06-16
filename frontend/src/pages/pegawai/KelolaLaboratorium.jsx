@@ -1,98 +1,161 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import {
+  getGedung,
+  getLaboratorium,
+  createLaboratorium,
+  updateLaboratorium,
+  deleteLaboratorium,
+} from "../../services/fasilitasService";
 
-import Sidebar from "../../partials/Sidebar";
-import Header from "../../partials/Header";
-import FilterButton from "../../components/DropdownFilter";
-import Datepicker from "../../components/Datepicker";
-import DashboardCard01 from "../../partials/dashboard/DashboardCard01";
-import DashboardCard02 from "../../partials/dashboard/DashboardCard02";
-import DashboardCard03 from "../../partials/dashboard/DashboardCard03";
-import DashboardCard04 from "../../partials/dashboard/DashboardCard04";
-import DashboardCard05 from "../../partials/dashboard/DashboardCard05";
-import DashboardCard06 from "../../partials/dashboard/DashboardCard06";
-import DashboardCard07 from "../../partials/dashboard/DashboardCard07";
-import DashboardCard08 from "../../partials/dashboard/DashboardCard08";
-import DashboardCard09 from "../../partials/dashboard/DashboardCard09";
-import DashboardCard10 from "../../partials/dashboard/DashboardCard10";
-import DashboardCard11 from "../../partials/dashboard/DashboardCard11";
-import DashboardCard12 from "../../partials/dashboard/DashboardCard12";
-import DashboardCard13 from "../../partials/dashboard/DashboardCard13";
-import Banner from "../../partials/Banner";
+const EMPTY = {
+  gedung_id: "",
+  kode: "",
+  nama: "",
+  lantai: 1,
+  kapasitas: 30,
+  fasilitas: "",
+  status: "tersedia",
+};
 
-function KelolaPegawai() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);a``
+export default function KelolaLaboratorium() {
+  const [gedungList, setGedungList] = useState([]);
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState(EMPTY);
+  const [editId, setEditId] = useState(null);
+  const [error, setError] = useState("");
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [gedung, lab] = await Promise.all([getGedung(), getLaboratorium()]);
+      setGedungList(gedung);
+      setList(lab);
+    } catch (err) {
+      setError(err.response?.data?.message || "Gagal memuat data");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const openCreate = () => { setForm(EMPTY); setEditId(null); setShowModal(true); };
+
+  const openEdit = (item) => {
+    setForm({
+      gedung_id: item.gedungId,
+      kode: item.kode,
+      nama: item.nama,
+      lantai: item.lantai,
+      kapasitas: item.kapasitas,
+      fasilitas: (item.fasilitas || []).join(", "),
+      status: item.status,
+    });
+    setEditId(item.id);
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      ...form,
+      gedung_id: Number(form.gedung_id),
+      lantai: Number(form.lantai),
+      kapasitas: Number(form.kapasitas),
+      fasilitas: form.fasilitas.split(",").map((s) => s.trim()).filter(Boolean),
+    };
+    try {
+      if (editId) await updateLaboratorium(editId, payload);
+      else await createLaboratorium(payload);
+      setShowModal(false);
+      fetchData();
+    } catch (err) {
+      setError(err.response?.data?.message || "Gagal menyimpan");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Hapus laboratorium ini?")) return;
+    await deleteLaboratorium(id);
+    fetchData();
+  };
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
-      
-
-      {/* Content area */}
-      <div className="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-        {/*  Site header */}
-      
-
-        <main className="grow">
-          <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-            {/* Dashboard actions */}
-            <div className="sm:flex sm:justify-between sm:items-center mb-8">
-              {/* Left: Title */}
-              <div className="mb-4 sm:mb-0">
-                <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Dashboard</h1>
-              </div>
-
-              {/* Right: Actions */}
-              <div className="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
-                {/* Filter button */}
-                <FilterButton align="right" />
-                {/* Datepicker built with React Day Picker */}
-                <Datepicker align="right" />
-                {/* Add view button */}
-                <button className="btn bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
-                  <svg className="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
-                    <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
-                  </svg>
-                  <span className="max-xs:sr-only">Add View</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Cards */}
-            <div className="grid grid-cols-12 gap-6">
-              {/* Line chart (Acme Plus) */}
-              <DashboardCard01 />
-              {/* Line chart (Acme Advanced) */}
-              <DashboardCard02 />
-              {/* Line chart (Acme Professional) */}
-              <DashboardCard03 />
-              {/* Bar chart (Direct vs Indirect) */}
-              <DashboardCard04 />
-              {/* Line chart (Real Time Value) */}
-              <DashboardCard05 />
-              {/* Doughnut chart (Top Countries) */}
-              <DashboardCard06 />
-              {/* Table (Top Channels) */}
-              <DashboardCard07 />
-              {/* Line chart (Sales Over Time) */}
-              <DashboardCard08 />
-              {/* Stacked bar chart (Sales VS Refunds) */}
-              <DashboardCard09 />
-              {/* Card (Customers) */}
-              <DashboardCard10 />
-              {/* Card (Reasons for Refunds) */}
-              <DashboardCard11 />
-              {/* Card (Recent Activity) */}
-              <DashboardCard12 />
-              {/* Card (Income/Expenses) */}
-              <DashboardCard13 />
-            </div>
+    <main className="grow">
+      <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
+        <div className="sm:flex sm:justify-between sm:items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Kelola Laboratorium</h1>
+            <p className="text-gray-500 mt-1">CRUD data laboratorium per gedung</p>
           </div>
-        </main>
+          <button onClick={openCreate} className="btn bg-violet-600 text-white hover:bg-violet-700">+ Tambah Lab</button>
+        </div>
 
-        <Banner />
+        {error && <div className="bg-red-100 text-red-700 p-4 rounded-xl mb-4">{error}</div>}
+
+        <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="p-4 text-left">Kode</th>
+                <th className="p-4 text-left">Nama</th>
+                <th className="p-4 text-left">Gedung</th>
+                <th className="p-4 text-left">Kapasitas</th>
+                <th className="p-4 text-left">Status</th>
+                <th className="p-4 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={6} className="p-8 text-center">Memuat...</td></tr>
+              ) : list.map((item) => (
+                <tr key={item.id} className="border-t hover:bg-gray-50">
+                  <td className="p-4 font-medium">{item.kode}</td>
+                  <td className="p-4">{item.nama}</td>
+                  <td className="p-4">{item.gedungNama}</td>
+                  <td className="p-4">{item.kapasitas}</td>
+                  <td className="p-4"><span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">{item.status}</span></td>
+                  <td className="p-4 text-center">
+                    <button onClick={() => openEdit(item)} className="text-violet-600 mr-3"><FiEdit2 /></button>
+                    <button onClick={() => handleDelete(item.id)} className="text-red-600"><FiTrash2 /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {showModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 w-full max-w-lg space-y-4">
+              <h2 className="text-xl font-bold">{editId ? "Edit" : "Tambah"} Laboratorium</h2>
+              <select required value={form.gedung_id} onChange={(e) => setForm({ ...form, gedung_id: e.target.value })} className="form-input w-full">
+                <option value="">Pilih Gedung</option>
+                {gedungList.map((g) => <option key={g.id} value={g.id}>{g.nama}</option>)}
+              </select>
+              <input required placeholder="Kode Lab" value={form.kode} onChange={(e) => setForm({ ...form, kode: e.target.value })} className="form-input w-full" />
+              <input required placeholder="Nama Lab" value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} className="form-input w-full" />
+              <div className="grid grid-cols-2 gap-3">
+                <input type="number" value={form.lantai} onChange={(e) => setForm({ ...form, lantai: e.target.value })} className="form-input w-full" />
+                <input type="number" value={form.kapasitas} onChange={(e) => setForm({ ...form, kapasitas: e.target.value })} className="form-input w-full" />
+              </div>
+              <input placeholder="Fasilitas (pisah koma)" value={form.fasilitas} onChange={(e) => setForm({ ...form, fasilitas: e.target.value })} className="form-input w-full" />
+              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="form-input w-full">
+                <option value="tersedia">Tersedia</option>
+                <option value="terbatas">Terbatas</option>
+                <option value="penuh">Penuh</option>
+              </select>
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setShowModal(false)} className="btn bg-gray-100 flex-1">Batal</button>
+                <button type="submit" className="btn bg-violet-600 text-white flex-1">Simpan</button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
-    </div>
+    </main>
   );
 }
-
-export default KelolaPegawai;

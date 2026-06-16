@@ -22,12 +22,12 @@ import DetailPeminjaman from "./pages/pegawai/DetailPeminjaman";
 import FormPeminjamanBarang from "./pages/peminjam/FormPeminjamanBarang";
 import FormPeminjamanRuangan from "./pages/peminjam/FormPeminjamanRuangan";
 import FormPeminjamanLab from "./pages/peminjam/FormPeminjamanLab";
+import FormPeminjamanOlahraga from "./pages/peminjam/FormPeminjamanOlahraga";
+import FormPeminjamanDormitori from "./pages/peminjam/FormPeminjamanDormitori";
+import PilihRuangan from "./pages/peminjam/PilihRuangan";
 import LaporanKondisiSarpras from "./pages/peminjam/LaporanKondisiSarpras";
 import RiwayatPeminjaman from "./pages/peminjam/RiwayatPeminjaman";
 
-// =========================
-// 🧹 JANITOR IMPORT START
-// =========================
 import DashboardJanitor from "./pages/janitor/DashboardJanitor";
 import KelolaSarpras from "./pages/janitor/KelolaSarpras";
 import MonitoringSarpras from "./pages/janitor/MonitoringSarpras";
@@ -37,6 +37,18 @@ import LaporanSarpras from "./pages/janitor/LaporanSarpras";
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const Forgot = lazy(() => import("./pages/auth/Forgot"));
+
+const peminjamanRoutes = [
+  { path: "peminjaman-barang", element: <FormPeminjamanBarang /> },
+  { path: "peminjaman-ruangan", element: <PilihRuangan /> },
+  { path: "peminjaman-ruangan/form", element: <FormPeminjamanRuangan /> },
+  { path: "peminjaman-lab", element: <FormPeminjamanLab /> },
+  { path: "peminjaman-lab/form", element: <FormPeminjamanLab /> },
+  { path: "peminjaman-olahraga", element: <FormPeminjamanOlahraga /> },
+  { path: "peminjaman-dormitori", element: <FormPeminjamanDormitori /> },
+  { path: "laporan-kondisi", element: <LaporanKondisiSarpras /> },
+  { path: "riwayat-peminjaman", element: <RiwayatPeminjaman /> },
+];
 
 function App() {
   const location = useLocation();
@@ -50,82 +62,14 @@ function App() {
   return (
     <Suspense fallback={<Loading />}>
       <Routes>
-
-
-        {/* ========================= */}
-        {/* MAIN LAYOUT */}
-        {/* ========================= */}
-        <Route element={<MainLayout />}>
-
-          {/* Dashboard */}
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/peminjam" element={<DashboardPeminjam />} />
-
-          {/* Pegawai */}
-          <Route path="/pegawai" element={<KelolaPegawai />} />
-
-          {/* Fasilitas */}
-          <Route path="/fasilitas/barang" element={<KelolaBarang />} />
-          <Route path="/fasilitas/ruangan" element={<KelolaRuangan />} />
-          <Route path="/fasilitas/laboratorium" element={<KelolaLaboratorium />} />
-
-          {/* Peminjaman */}
-          <Route path="/peminjaman/barang" element={<PeminjamanBarang />} />
-          <Route path="/peminjaman/ruangan" element={<PeminjamanRuangan />} />
-          <Route path="/peminjaman/laboratorium" element={<PeminjamanLaboratorium />} />
-
-          <Route path="/peminjam/peminjaman-barang" element={<FormPeminjamanBarang />} />
-          <Route path="/peminjam/peminjaman-ruangan" element={<FormPeminjamanRuangan />} />
-          <Route path="/peminjam/peminjaman-lab" element={<FormPeminjamanLab />} />
-          <Route path="/peminjam/laporan-kondisi" element={<LaporanKondisiSarpras />} />
-          <Route path="/peminjam/riwayat-peminjaman" element={<RiwayatPeminjaman />} />
-
-
-          <Route path="/pegawai/peminjaman/barang/:id" element={<DetailPeminjaman />} />
-
-          {/* ========================= */}
-          {/* 🧹 JANITOR ROUTES START */}
-          {/* ========================= */}
-
-          <Route path="/janitor">
-            {/* Dashboard Janitor */}
-            <Route index element={<DashboardJanitor />} />
-
-            {/* Kelola Sarpras */}
-            <Route path="kelola-sarpras" element={<KelolaSarpras />} />
-
-            {/* Monitoring */}
-            <Route path="monitoring-sarpras" element={<MonitoringSarpras />} />
-
-            {/* Peminjaman (APPROVED ONLY) */}
-            <Route path="peminjaman-sarpras" element={<PeminjamanSarpras />} />
-
-            {/* Laporan Kerusakan */}
-            <Route path="laporan-sarpras" element={<LaporanSarpras />} />
-          </Route>
-
-          {/* ========================= */}
-          {/* 🧹 JANITOR ROUTES END */}
-          {/* ========================= */}
-
-        </Route>
-
-        {/* ========================= */}
-        {/* AUTH LAYOUT */}
-        {/* ========================= */}
-=======
-        {/* Auth - public */}
-
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot" element={<Forgot />} />
         </Route>
 
-        {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
-            {/* Pegawai Sarpras */}
             <Route element={<ProtectedRoute allowedRoles={["pegawai_sarpras"]} />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/pegawai" element={<KelolaPegawai />} />
@@ -138,25 +82,26 @@ function App() {
               <Route path="/pegawai/peminjaman/barang/:id" element={<DetailPeminjaman />} />
             </Route>
 
-            {/* Janitor */}
             <Route element={<ProtectedRoute allowedRoles={["janitor"]} />}>
               <Route path="/janitor" element={<DashboardJanitor />} />
               <Route path="/janitor/kelola-sarpras" element={<KelolaSarpras />} />
               <Route path="/janitor/monitoring-sarpras" element={<MonitoringSarpras />} />
               <Route path="/janitor/peminjaman-sarpras" element={<PeminjamanSarpras />} />
               <Route path="/janitor/laporan-sarpras" element={<LaporanSarpras />} />
+              {peminjamanRoutes.map((r) => (
+                <Route key={`janitor-${r.path}`} path={`/janitor/${r.path}`} element={r.element} />
+              ))}
             </Route>
 
-            {/* Peminjam */}
             <Route element={<ProtectedRoute allowedRoles={["peminjam"]} />}>
               <Route path="/peminjam" element={<DashboardPeminjam />} />
-              <Route path="/peminjam/peminjaman-barang" element={<FormPeminjamanBarang />} />
-              <Route path="/peminjam/peminjaman-ruangan" element={<FormPeminjamanRuangan />} />
+              {peminjamanRoutes.map((r) => (
+                <Route key={`peminjam-${r.path}`} path={`/peminjam/${r.path}`} element={r.element} />
+              ))}
             </Route>
           </Route>
         </Route>
 
-        {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Suspense>

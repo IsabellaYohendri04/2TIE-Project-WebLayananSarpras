@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { BsFillExclamationDiamondFill } from "react-icons/bs";
 import { Link } from "react-router-dom";
-// import dataPeminjaman from "../../data/peminjaman-barang.json";
+import { FiTrash2 } from "react-icons/fi";
+import {
+  getPeminjamanBarang,
+  updatePeminjamanBarang,
+  deletePeminjamanBarang,
+} from "../../services/peminjamanService";
 
 function PeminjamanBarang() {
 
@@ -16,15 +20,16 @@ const [debouncedSearch, setDebouncedSearch] = useState("");
   // Ambil data sekali saat halaman dibuka
   // Ambil data sekali saat halaman dibuka
 useEffect(() => {
-    axios
-    .get("/api/peminjaman/barang")
+    getPeminjamanBarang()
     .then((response) => {
-      setDataPeminjaman(response.data);
-      setFilteredData(response.data);
+      setDataPeminjaman(response);
+      setFilteredData(response);
     })
     .catch((err) => {
       console.error(err);
-    });
+      setError("Gagal memuat data peminjaman");
+    })
+    .finally(() => setLoading(false));
 }, []);
 
 // Debounce 500ms

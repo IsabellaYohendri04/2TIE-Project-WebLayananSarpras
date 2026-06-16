@@ -1,5 +1,9 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { getBarangMaster } from "../../services/fasilitasService";
+import { createPeminjamanBarang } from "../../services/peminjamanService";
+import { usePeminjamanBase } from "../../hooks/usePeminjamanBase";
 import {
   PageShell,
   PageHeader,
@@ -14,26 +18,80 @@ import {
 function FormPeminjamanBarang() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { base } = usePeminjamanBase();
   const tanggalKalender = searchParams.get("date");
 
-  const barangList = [
-    "Kursi",
-    "Sofa Panjang",
-    "Sofa Pendek",
-    "Meja Kaca Panjang",
-    "Meja Kecil Kaca",
-    "Alas Meja Kaca",
-    "Blower",
-    "Papan Backdrop",
-    "Sound System",
-    "Mic",
-    "Cok Sambung",
-    "Meja Putih Panjang",
-    "Meja Putih Bulat",
-    "Tandu",
-    "Tabung Oksigen",
-    "Pick Up",
-  ];
+  const [barangList, setBarangList] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [form, setForm] = useState({
+    nama: user?.nama || "",
+    nim: user?.nim || "",
+    prodi: user?.prodi || "",
+    noHp: user?.no_hp || "",
+    organisasi: "",
+    barang: "",
+    tanggalPinjam: tanggalKalender || "",
+    tanggalKembali: "",
+    keperluan: "",
+  });
+
+  useEffect(() => {
+    getBarangMaster().then(setBarangList).catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      setForm((prev) => ({
+        ...prev,
+        nama: prev.nama || user.nama || "",
+        nim: prev.nim || user.nim || "",
+        prodi: prev.prodi || user.prodi || "",
+        noHp: prev.noHp || user.no_hp || "",
+      }));
+    }
+  }, [user]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.barang || !form.tanggalPinjam) {
+      alert("Barang dan tanggal pinjam wajib diisi");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await createPeminjamanBarang({
+        nama: form.nama,
+        nim: form.nim,
+        prodi: form.prodi,
+        barang: form.barang,
+        kategori: "Barang",
+        tanggalPinjam: form.tanggalPinjam,
+        tanggalKembali: form.tanggalKembali || form.tanggalPinjam,
+        organisasi: form.organisasi,
+        detail: { keperluan: form.keperluan, noHp: form.noHp },
+      });
+      setSubmitted(true);
+    } catch (err) {
+      alert(err.response?.data?.message || "Gagal mengirim pengajuan");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <PageShell>
+        <ContentCard className="max-w-xl mx-auto text-center py-16">
+          <div className="text-5xl mb-4">✅</div>
+          <h2 className="text-2xl font-bold mb-4">Pengajuan Barang Berhasil!</h2>
+          <button onClick={() => navigate(`${base}/riwayat-peminjaman`)} className="px-6 py-3 bg-violet-600 text-white rounded-xl mr-3">Lihat Riwayat</button>
+          <button onClick={() => navigate(base)} className="px-6 py-3 bg-slate-100 rounded-xl">Dashboard</button>
+        </ContentCard>
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell>
@@ -44,154 +102,64 @@ function FormPeminjamanBarang() {
       />
 
       <ContentCard>
-        <form onSubmit={(e) => e.preventDefault()}>
+        <form onSubmit={handleSubmit}>
           <FormSection title="Data Peminjam" icon="👤">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Nama Peminjam</label>
-                <input type="text" placeholder="Nama lengkap" className={inputClass} />
+                <input required type="text" value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>NIM</label>
-                <input type="text" placeholder="Contoh: 233510101" className={inputClass} />
+                <input required type="text" value={form.nim} onChange={(e) => setForm({ ...form, nim: e.target.value })} className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>Program Studi</label>
-                <input type="text" placeholder="Contoh: Teknik Informatika" className={inputClass} />
+                <input required type="text" value={form.prodi} onChange={(e) => setForm({ ...form, prodi: e.target.value })} className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>Nomor HP</label>
-                <input type="text" placeholder="08xxxxxxxxxx" className={inputClass} />
+                <input type="text" value={form.noHp} onChange={(e) => setForm({ ...form, noHp: e.target.value })} className={inputClass} />
               </div>
             </div>
           </FormSection>
 
-          <FormSection title="Organisasi / Himpunan" icon="🏛️">
+          <FormSection title="Detail Peminjaman" icon="📦">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Organisasi</label>
-                <select className={selectClass} defaultValue="">
-                  <option value="" disabled>Pilih Organisasi</option>
-                  <option>HIMA Teknik Informatika</option>
-                  <option>HIMA Teknik Elektro</option>
-                  <option>HIMA Teknik Mesin</option>
-                  <option>HIMA Akuntansi</option>
-                  <option>HIMA Akuntansi Perpajakan</option>
-                  <option>BEM Politeknik Caltex Riau</option>
-                  <option>ITSA</option>
-                  <option>UKM</option>
-                  <option>Dosen</option>
-                  <option>Unit Kerja PCR</option>
-                  <option>Lainnya</option>
+                <input type="text" value={form.organisasi} onChange={(e) => setForm({ ...form, organisasi: e.target.value })} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Barang *</label>
+                <select required value={form.barang} onChange={(e) => setForm({ ...form, barang: e.target.value })} className={selectClass}>
+                  <option value="">Pilih Barang</option>
+                  {barangList.map((b) => (
+                    <option key={b.id} value={b.nama}>{b.nama} (stok: {b.stok})</option>
+                  ))}
                 </select>
               </div>
               <div>
-                <label className={labelClass}>Nama Penanggung Jawab</label>
-                <input type="text" placeholder="Nama penanggung jawab" className={inputClass} />
-              </div>
-            </div>
-          </FormSection>
-
-          <FormSection title="Informasi Kegiatan" icon="📋">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Nama Kegiatan</label>
-                <input type="text" placeholder="Nama kegiatan" className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Sifat Kegiatan</label>
-                <input type="text" placeholder="Contoh: Seminar, Workshop" className={inputClass} />
-              </div>
-              <div className="md:col-span-2">
-                <label className={labelClass}>Keperluan</label>
-                <textarea rows="4" placeholder="Jelaskan keperluan peminjaman" className={inputClass} />
-              </div>
-            </div>
-          </FormSection>
-
-          <FormSection title="Proposal Kegiatan" icon="📄">
-            <div className="bg-violet-50 border-2 border-dashed border-violet-300 rounded-2xl p-6">
-              <label className={labelClass}>Upload Proposal (PDF)</label>
-              <input type="file" accept=".pdf" className={`${inputClass} bg-white`} />
-              <p className="text-sm text-gray-500 mt-2">Format PDF, maksimal 10 MB</p>
-            </div>
-          </FormSection>
-
-          <FormSection title="Jadwal Peminjaman" icon="📅">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Tanggal Pinjam</label>
-                <input
-                  type="date"
-                  value={tanggalKalender || ""}
-                  readOnly
-                  className={`${inputClass} bg-slate-100 cursor-not-allowed`}
-                />
+                <label className={labelClass}>Tanggal Pinjam *</label>
+                <input required type="date" value={form.tanggalPinjam} onChange={(e) => setForm({ ...form, tanggalPinjam: e.target.value })} className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>Tanggal Kembali</label>
-                <input type="date" className={inputClass} />
+                <input type="date" value={form.tanggalKembali} onChange={(e) => setForm({ ...form, tanggalKembali: e.target.value })} className={inputClass} />
               </div>
-              <div>
-                <label className={labelClass}>Jam Mulai</label>
-                <input type="time" className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Jam Selesai</label>
-                <input type="time" className={inputClass} />
+              <div className="md:col-span-2">
+                <label className={labelClass}>Keperluan</label>
+                <textarea rows={3} value={form.keperluan} onChange={(e) => setForm({ ...form, keperluan: e.target.value })} className={inputClass} />
               </div>
             </div>
           </FormSection>
 
-          <FormSection title="Lokasi Penggunaan" icon="📍">
-            <input
-              type="text"
-              placeholder="Contoh: GOR, Aula, Ruang Seminar"
-              className={inputClass}
-            />
-          </FormSection>
-
-          <FormSection title="Daftar Barang yang Dipinjam" icon="📦">
-            <div className="overflow-x-auto rounded-2xl border border-slate-200">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
-                    <th className="p-4 text-left font-semibold">Barang</th>
-                    <th className="p-4 text-center font-semibold w-32">Jumlah</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {barangList.map((barang, index) => (
-                    <tr key={index} className="border-b border-slate-100 hover:bg-violet-50/40">
-                      <td className="p-4">{barang}</td>
-                      <td className="p-4 text-center">
-                        <input
-                          type="number"
-                          min="0"
-                          defaultValue="0"
-                          className="border border-slate-200 rounded-lg p-2 w-20 text-center focus:ring-2 focus:ring-violet-500/40 focus:outline-none"
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </FormSection>
-
-          <FormSection title="Catatan Tambahan" icon="💬">
-            <textarea
-              rows="4"
-              className={inputClass}
-              placeholder="Tuliskan kebutuhan tambahan jika ada"
-            />
-          </FormSection>
-
-          <FormActions
-            onCancel={() => navigate("/peminjam")}
-            submitLabel="Ajukan Peminjaman"
-            submitColor="violet"
-          />
+          <FormActions>
+            <button type="button" onClick={() => navigate(base)} className="px-6 py-3 bg-slate-100 rounded-xl">Batal</button>
+            <button type="submit" disabled={submitting} className="px-6 py-3 bg-violet-600 text-white rounded-xl disabled:opacity-50">
+              {submitting ? "Mengirim..." : "Ajukan Peminjaman"}
+            </button>
+          </FormActions>
         </form>
       </ContentCard>
     </PageShell>
