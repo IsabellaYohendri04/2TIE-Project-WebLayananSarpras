@@ -1,26 +1,20 @@
-import React, { useState } from "react";
-import { useSearchParams } from "react-router-dom";
-
+import React from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import {
+  PageShell,
+  PageHeader,
+  ContentCard,
+  FormSection,
+  FormActions,
+  inputClass,
+  selectClass,
+  labelClass,
+} from "./components/PeminjamLayout";
 
 function FormPeminjamanBarang() {
-const [searchParams] = useSearchParams();
-
-const tanggalKalender = searchParams.get("date");
-   
-  const [formData, setFormData] = useState({
-    nama: "",
-    nim: "",
-    prodi: "",
-    noHp: "",
-    kegiatan: "",
-    sifat: "",
-    keperluan: "",
-    tanggalMulai: "",
-    tanggalSelesai: "",
-    jamMulai: "",
-    jamSelesai: "",
-    ruangan: "",
-  });
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const tanggalKalender = searchParams.get("date");
 
   const barangList = [
     "Kursi",
@@ -42,284 +36,165 @@ const tanggalKalender = searchParams.get("date");
   ];
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <PageShell>
+      <PageHeader
+        title="Form Peminjaman Barang"
+        subtitle="Isi data pengajuan peminjaman fasilitas kampus"
+        badge={tanggalKalender ? `Tanggal: ${tanggalKalender}` : null}
+      />
 
-      <div className="bg-white rounded-3xl shadow-lg p-8">
+      <ContentCard>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <FormSection title="Data Peminjam" icon="👤">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Nama Peminjam</label>
+                <input type="text" placeholder="Nama lengkap" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>NIM</label>
+                <input type="text" placeholder="Contoh: 233510101" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Program Studi</label>
+                <input type="text" placeholder="Contoh: Teknik Informatika" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Nomor HP</label>
+                <input type="text" placeholder="08xxxxxxxxxx" className={inputClass} />
+              </div>
+            </div>
+          </FormSection>
 
-        <h1 className="text-3xl font-bold mb-2">
-          Form Peminjaman Barang
-        </h1>
+          <FormSection title="Organisasi / Himpunan" icon="🏛️">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Organisasi</label>
+                <select className={selectClass} defaultValue="">
+                  <option value="" disabled>Pilih Organisasi</option>
+                  <option>HIMA Teknik Informatika</option>
+                  <option>HIMA Teknik Elektro</option>
+                  <option>HIMA Teknik Mesin</option>
+                  <option>HIMA Akuntansi</option>
+                  <option>HIMA Akuntansi Perpajakan</option>
+                  <option>BEM Politeknik Caltex Riau</option>
+                  <option>ITSA</option>
+                  <option>UKM</option>
+                  <option>Dosen</option>
+                  <option>Unit Kerja PCR</option>
+                  <option>Lainnya</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Nama Penanggung Jawab</label>
+                <input type="text" placeholder="Nama penanggung jawab" className={inputClass} />
+              </div>
+            </div>
+          </FormSection>
 
-        <p className="text-gray-500 mb-8">
-          Isi data peminjaman fasilitas kampus
-        </p>
+          <FormSection title="Informasi Kegiatan" icon="📋">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Nama Kegiatan</label>
+                <input type="text" placeholder="Nama kegiatan" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Sifat Kegiatan</label>
+                <input type="text" placeholder="Contoh: Seminar, Workshop" className={inputClass} />
+              </div>
+              <div className="md:col-span-2">
+                <label className={labelClass}>Keperluan</label>
+                <textarea rows="4" placeholder="Jelaskan keperluan peminjaman" className={inputClass} />
+              </div>
+            </div>
+          </FormSection>
 
-        {/* Data Peminjam */}
-        <h2 className="text-xl font-bold mb-4">
-          Data Peminjam
-        </h2>
+          <FormSection title="Proposal Kegiatan" icon="📄">
+            <div className="bg-violet-50 border-2 border-dashed border-violet-300 rounded-2xl p-6">
+              <label className={labelClass}>Upload Proposal (PDF)</label>
+              <input type="file" accept=".pdf" className={`${inputClass} bg-white`} />
+              <p className="text-sm text-gray-500 mt-2">Format PDF, maksimal 10 MB</p>
+            </div>
+          </FormSection>
 
-        <div className="grid md:grid-cols-2 gap-4 mb-8">
+          <FormSection title="Jadwal Peminjaman" icon="📅">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Tanggal Pinjam</label>
+                <input
+                  type="date"
+                  value={tanggalKalender || ""}
+                  readOnly
+                  className={`${inputClass} bg-slate-100 cursor-not-allowed`}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Tanggal Kembali</label>
+                <input type="date" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Jam Mulai</label>
+                <input type="time" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Jam Selesai</label>
+                <input type="time" className={inputClass} />
+              </div>
+            </div>
+          </FormSection>
 
-          <input
-            type="text"
-            placeholder="Nama Peminjam"
-            className="border rounded-xl p-3"
+          <FormSection title="Lokasi Penggunaan" icon="📍">
+            <input
+              type="text"
+              placeholder="Contoh: GOR, Aula, Ruang Seminar"
+              className={inputClass}
+            />
+          </FormSection>
+
+          <FormSection title="Daftar Barang yang Dipinjam" icon="📦">
+            <div className="overflow-x-auto rounded-2xl border border-slate-200">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
+                    <th className="p-4 text-left font-semibold">Barang</th>
+                    <th className="p-4 text-center font-semibold w-32">Jumlah</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {barangList.map((barang, index) => (
+                    <tr key={index} className="border-b border-slate-100 hover:bg-violet-50/40">
+                      <td className="p-4">{barang}</td>
+                      <td className="p-4 text-center">
+                        <input
+                          type="number"
+                          min="0"
+                          defaultValue="0"
+                          className="border border-slate-200 rounded-lg p-2 w-20 text-center focus:ring-2 focus:ring-violet-500/40 focus:outline-none"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </FormSection>
+
+          <FormSection title="Catatan Tambahan" icon="💬">
+            <textarea
+              rows="4"
+              className={inputClass}
+              placeholder="Tuliskan kebutuhan tambahan jika ada"
+            />
+          </FormSection>
+
+          <FormActions
+            onCancel={() => navigate("/peminjam")}
+            submitLabel="Ajukan Peminjaman"
+            submitColor="violet"
           />
-
-          <input
-            type="text"
-            placeholder="NIM"
-            className="border rounded-xl p-3"
-          />
-
-          <input
-            type="text"
-            placeholder="Program Studi"
-            className="border rounded-xl p-3"
-          />
-
-          <input
-            type="text"
-            placeholder="Nomor HP"
-            className="border rounded-xl p-3"
-          />
-
-        </div>
-
-        {/* Organisasi */}
-<h2 className="text-xl font-bold mb-4">
-  Organisasi / Himpunan
-</h2>
-
-<div className="grid md:grid-cols-2 gap-4 mb-8">
-
-  <select className="border rounded-xl p-3">
-
-    <option value="">
-      Pilih Organisasi
-    </option>
-
-    <option>HIMA Teknik Informatika</option>
-    <option>HIMA Teknik Elektro</option>
-    <option>HIMA Teknik Mesin</option>
-    <option>HIMA Akuntansi</option>
-    <option>HIMA Akuntansi Perpajakan</option>
-    <option>BEM Politeknik Caltex Riau</option>
-    <option>ITSA</option>
-    <option>UKM</option>
-    <option>Dosen</option>
-    <option>Unit Kerja PCR</option>
-    <option>Lainnya</option>
-
-  </select>
-
-  <input
-    type="text"
-    placeholder="Nama Penanggung Jawab"
-    className="border rounded-xl p-3"
-  />
-
-</div>
-
-        {/* Kegiatan */}
-        <h2 className="text-xl font-bold mb-4">
-          Informasi Kegiatan
-        </h2>
-
-        <div className="grid md:grid-cols-2 gap-4 mb-8">
-
-          <input
-            type="text"
-            placeholder="Nama Kegiatan"
-            className="border rounded-xl p-3"
-          />
-
-          <input
-            type="text"
-            placeholder="Sifat Kegiatan"
-            className="border rounded-xl p-3"
-          />
-
-          <textarea
-            rows="4"
-            placeholder="Keperluan"
-            className="border rounded-xl p-3 md:col-span-2"
-          />
-
-        </div>
-
-        {/* Upload Proposal */}
-<h2 className="text-xl font-bold mb-4">
-  Proposal Kegiatan
-</h2>
-
-<div className="bg-slate-50 border-2 border-dashed border-violet-300 rounded-2xl p-6 mb-8">
-
-  <label className="block font-semibold mb-3">
-    Upload Proposal (PDF)
-  </label>
-
-  <input
-    type="file"
-    accept=".pdf"
-    className="w-full border rounded-xl p-3 bg-white"
-  />
-
-  <p className="text-sm text-gray-500 mt-2">
-    Format PDF, maksimal 10 MB
-  </p>
-
-</div>
-
-     <h2 className="text-xl font-bold mb-4">
-  Jadwal Peminjaman
-</h2>
-
-<div className="grid md:grid-cols-2 gap-6 mb-8">
-
-  <div>
-    <label className="block font-semibold mb-2">
-      Tanggal Pinjam
-    </label>
-
-    <input
-      type="date"
-      value={tanggalKalender || ""}
-      readOnly
-      className="w-full border rounded-xl p-3 bg-gray-100"
-    />
-  </div>
-
-  <div>
-    <label className="block font-semibold mb-2">
-      Tanggal Kembali
-    </label>
-
-    <input
-      type="date"
-      className="w-full border rounded-xl p-3"
-    />
-  </div>
-
-  <div>
-    <label className="block font-semibold mb-2">
-      Jam Mulai
-    </label>
-
-    <input
-      type="time"
-      className="w-full border rounded-xl p-3"
-    />
-  </div>
-
-  <div>
-    <label className="block font-semibold mb-2">
-      Jam Selesai
-    </label>
-
-    <input
-      type="time"
-      className="w-full border rounded-xl p-3"
-    />
-  </div>
-
-</div>
-
-        {/* Ruangan */}
-        <h2 className="text-xl font-bold mb-4">
-          Lokasi Penggunaan
-        </h2>
-
-        <input
-          type="text"
-          placeholder="Contoh: GOR, Aula, Ruang Seminar"
-          className="border rounded-xl p-3 w-full mb-8"
-        />
-
-        {/* Barang */}
-        <h2 className="text-xl font-bold mb-4">
-          Daftar Barang yang Dipinjam
-        </h2>
-
-        <div className="overflow-x-auto mb-8">
-
-          <table className="w-full border">
-
-            <thead className="bg-violet-600 text-white">
-
-              <tr>
-                <th className="p-3 text-left">
-                  Barang
-                </th>
-
-                <th className="p-3">
-                  Jumlah
-                </th>
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              {barangList.map((barang, index) => (
-                <tr key={index} className="border-b">
-
-                  <td className="p-3">
-                    {barang}
-                  </td>
-
-                  <td className="p-3">
-
-                    <input
-                      type="number"
-                      min="0"
-                      defaultValue="0"
-                      className="border rounded-lg p-2 w-24"
-                    />
-
-                  </td>
-
-                </tr>
-              ))}
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-        {/* Catatan */}
-        <div className="mb-8">
-
-          <label className="font-semibold block mb-2">
-            Catatan Tambahan
-          </label>
-
-          <textarea
-            rows="4"
-            className="w-full border rounded-xl p-3"
-            placeholder="Tuliskan kebutuhan tambahan jika ada"
-          />
-
-        </div>
-
-        {/* Tombol */}
-        <div className="flex gap-3">
-
-          <button className="px-6 py-3 bg-gray-200 rounded-xl">
-            Batal
-          </button>
-
-          <button className="px-6 py-3 bg-violet-600 text-white rounded-xl">
-            Ajukan Peminjaman
-          </button>
-
-        </div>
-
-      </div>
-
-    </div>
+        </form>
+      </ContentCard>
+    </PageShell>
   );
 }
 
