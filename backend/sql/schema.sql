@@ -96,3 +96,13 @@ CREATE TABLE IF NOT EXISTS laporan_kerusakan (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (sarpras_id) REFERENCES sarpras(id) ON DELETE SET NULL
 );
+
+CREATE TABLE barang (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nama VARCHAR(200) NOT NULL,
+  kategori VARCHAR(100) NOT NULL,
+  status ENUM('Tersedia','Dipinjam','Dipakai','Rusak','Maintenance') DEFAULT 'Tersedia',
+  kondisi TEXT,
+  image VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

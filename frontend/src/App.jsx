@@ -9,6 +9,7 @@ import AuthLayout from "./partials/AuthLayout";
 import Loading from "./components/Loading";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+// ================= PEGAWAI =================
 import Dashboard from "./pages/Dashboard";
 import KelolaBarang from "./pages/pegawai/KelolaBarang";
 import KelolaPegawai from "./pages/pegawai/KelolaPegawai";
@@ -19,6 +20,7 @@ import PeminjamanRuangan from "./pages/pegawai/PeminjamanRuangan";
 import PeminjamanLaboratorium from "./pages/pegawai/PeminjamanLaboratorium";
 import DetailPeminjaman from "./pages/pegawai/DetailPeminjaman";
 
+// ================= PEMINJAM =================
 import DashboardPeminjam from "./pages/peminjam/DashboardPeminjam";
 import FormPeminjamanBarang from "./pages/peminjam/FormPeminjamanBarang";
 import FormPeminjamanRuangan from "./pages/peminjam/FormPeminjamanRuangan";
@@ -29,17 +31,14 @@ import PilihRuangan from "./pages/peminjam/PilihRuangan";
 import LaporanKondisiSarpras from "./pages/peminjam/LaporanKondisiSarpras";
 import RiwayatPeminjaman from "./pages/peminjam/RiwayatPeminjaman";
 
-<<<<<<< HEAD
-=======
-// Janitor
->>>>>>> 567df8493f6aca7aff1c087ae8364b9b38a2ffac
+// ================= JANITOR =================
 import DashboardJanitor from "./pages/janitor/DashboardJanitor";
 import KelolaSarpras from "./pages/janitor/KelolaSarpras";
 import MonitoringSarpras from "./pages/janitor/MonitoringSarpras";
 import PeminjamanSarpras from "./pages/janitor/PeminjamanSarpras";
 import LaporanSarpras from "./pages/janitor/LaporanSarpras";
 
-// Auth (lazy)
+// ================= AUTH (lazy) =================
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const Forgot = lazy(() => import("./pages/auth/Forgot"));
@@ -68,27 +67,19 @@ function App() {
   return (
     <Suspense fallback={<Loading />}>
       <Routes>
-<<<<<<< HEAD
-=======
 
         {/* AUTH */}
->>>>>>> 567df8493f6aca7aff1c087ae8364b9b38a2ffac
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot" element={<Forgot />} />
         </Route>
 
-<<<<<<< HEAD
-        <Route element={<ProtectedRoute />}>
-          <Route element={<MainLayout />}>
-=======
-        {/* PROTECTED */}
+        {/* PROTECTED AREA */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
 
             {/* PEGAWAI SARPRAS */}
->>>>>>> 567df8493f6aca7aff1c087ae8364b9b38a2ffac
             <Route element={<ProtectedRoute allowedRoles={["pegawai_sarpras"]} />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/pegawai" element={<KelolaPegawai />} />
@@ -104,8 +95,6 @@ function App() {
               <Route path="/pegawai/peminjaman/barang/:id" element={<DetailPeminjaman />} />
             </Route>
 
-<<<<<<< HEAD
-=======
             {/* PEMINJAM */}
             <Route element={<ProtectedRoute allowedRoles={["peminjam"]} />}>
               <Route path="/peminjam" element={<DashboardPeminjam />} />
@@ -117,34 +106,26 @@ function App() {
             </Route>
 
             {/* JANITOR */}
->>>>>>> 567df8493f6aca7aff1c087ae8364b9b38a2ffac
             <Route element={<ProtectedRoute allowedRoles={["janitor"]} />}>
               <Route path="/janitor" element={<DashboardJanitor />} />
               <Route path="/janitor/kelola-sarpras" element={<KelolaSarpras />} />
               <Route path="/janitor/monitoring-sarpras" element={<MonitoringSarpras />} />
               <Route path="/janitor/peminjaman-sarpras" element={<PeminjamanSarpras />} />
               <Route path="/janitor/laporan-sarpras" element={<LaporanSarpras />} />
+
               {peminjamanRoutes.map((r) => (
-                <Route key={`janitor-${r.path}`} path={`/janitor/${r.path}`} element={r.element} />
+                <Route
+                  key={`janitor-${r.path}`}
+                  path={`/janitor/${r.path}`}
+                  element={r.element}
+                />
               ))}
             </Route>
 
-<<<<<<< HEAD
-            <Route element={<ProtectedRoute allowedRoles={["peminjam"]} />}>
-              <Route path="/peminjam" element={<DashboardPeminjam />} />
-              {peminjamanRoutes.map((r) => (
-                <Route key={`peminjam-${r.path}`} path={`/peminjam/${r.path}`} element={r.element} />
-              ))}
-            </Route>
-          </Route>
-        </Route>
-
-=======
           </Route>
         </Route>
 
         {/* fallback */}
->>>>>>> 567df8493f6aca7aff1c087ae8364b9b38a2ffac
         <Route path="*" element={<Navigate to="/login" replace />} />
 
       </Routes>
