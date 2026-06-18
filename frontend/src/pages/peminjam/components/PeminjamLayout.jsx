@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { usePeminjamanBase } from "../../../hooks/usePeminjamanBase";
 
 export const inputClass =
   "w-full border border-slate-200 rounded-xl p-3 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-400 transition";
@@ -23,7 +24,9 @@ export function PageShell({ children }) {
   );
 }
 
-export function PageHeader({ title, subtitle, badge, backTo = "/peminjam" }) {
+export function PageHeader({ title, subtitle, badge, backTo }) {
+  const { base } = usePeminjamanBase();
+  const dashboardPath = backTo || base;
   return (
     <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-r from-violet-700 via-indigo-700 to-blue-700 p-8 shadow-2xl mb-8">
       <div className="absolute right-0 top-0 opacity-10 text-[180px] leading-none select-none">
@@ -31,7 +34,7 @@ export function PageHeader({ title, subtitle, badge, backTo = "/peminjam" }) {
       </div>
       <div className="relative z-10">
         <Link
-          to={backTo}
+          to={dashboardPath}
           className="inline-flex items-center gap-2 text-violet-100 hover:text-white text-sm mb-4 transition"
         >
           ← Kembali ke Dashboard

@@ -87,10 +87,11 @@ export default function FormPeminjamanOlahraga() {
     return (
       <PageShell>
         <ContentCard className="max-w-xl mx-auto text-center py-20 border-0 shadow-2xl bg-gradient-to-br from-white to-emerald-50">
-          <div className="text-6xl mb-4">🏆</div>
-          <h2 className="text-2xl font-bold mb-4">Pengajuan Olahraga Berhasil!</h2>
-          <button onClick={() => navigate(`${base}/riwayat-peminjaman`)} className="px-6 py-3 bg-violet-600 text-white rounded-xl mr-2">Riwayat</button>
-          <button onClick={() => navigate(base)} className="px-6 py-3 bg-slate-100 rounded-xl">Dashboard</button>
+          <div className="text-6xl mb-4 animate-bounce">🏆</div>
+          <h2 className="text-2xl font-bold mb-2">Pengajuan Olahraga Berhasil!</h2>
+          <p className="text-gray-500 mb-6">Pengajuan langsung masuk ke dashboard Janitor untuk dipantau.</p>
+          <button onClick={() => navigate(`${base}/riwayat-peminjaman`)} className="px-6 py-3 bg-violet-600 text-white rounded-xl mr-2 hover:bg-violet-700 transition">Riwayat</button>
+          <button onClick={() => navigate(base)} className="px-6 py-3 bg-slate-100 rounded-xl hover:bg-slate-200 transition">Dashboard</button>
         </ContentCard>
       </PageShell>
     );

@@ -98,11 +98,13 @@ function App() {
             {/* PEMINJAM */}
             <Route element={<ProtectedRoute allowedRoles={["peminjam"]} />}>
               <Route path="/peminjam" element={<DashboardPeminjam />} />
-              <Route path="/peminjam/peminjaman-barang" element={<FormPeminjamanBarang />} />
-              <Route path="/peminjam/peminjaman-ruangan" element={<FormPeminjamanRuangan />} />
-              <Route path="/peminjam/peminjaman-lab" element={<FormPeminjamanLab />} />
-              <Route path="/peminjam/laporan-kondisi" element={<LaporanKondisiSarpras />} />
-              <Route path="/peminjam/riwayat-peminjaman" element={<RiwayatPeminjaman />} />
+              {peminjamanRoutes.map((r) => (
+                <Route
+                  key={`peminjam-${r.path}`}
+                  path={`/peminjam/${r.path}`}
+                  element={r.element}
+                />
+              ))}
             </Route>
 
             {/* JANITOR */}
