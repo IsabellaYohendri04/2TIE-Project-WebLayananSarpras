@@ -271,50 +271,72 @@ function PegawaiNav({ pathname, setSidebarExpanded }) {
 
 function JanitorNav({ pathname, setSidebarExpanded }) {
   const opsItems = [
-    { to: "/janitor/kelola-sarpras", icon: "📦", label: "Kelola Sarpras", match: pathname.includes("kelola-sarpras") },
-    { to: "/janitor/monitoring-sarpras", icon: "📊", label: "Monitoring Sarpras", match: pathname.includes("monitoring-sarpras") },
-    { to: "/janitor/peminjaman-sarpras", icon: "📋", label: "Lihat Peminjaman", match: pathname.includes("peminjaman-sarpras") },
-    { to: "/janitor/laporan-sarpras", icon: "🔧", label: "Laporan Kerusakan", match: pathname.includes("laporan-sarpras") },
+    {
+      to: "/janitor/kelola-sarpras",
+      icon: "📦",
+      label: "Kelola Sarpras",
+      match: pathname.includes("kelola-sarpras"),
+    },
+    {
+      to: "/janitor/monitoring-sarpras",
+      icon: "📊",
+      label: "Monitoring Sarpras",
+      match: pathname.includes("monitoring-sarpras"),
+    },
+    {
+      to: "/janitor/peminjaman-sarpras",
+      icon: "📋",
+      label: "Lihat Peminjaman",
+      match: pathname.includes("peminjaman-sarpras"),
+    },
+    {
+      to: "/janitor/laporan-sarpras",
+      icon: "🔧",
+      label: "Laporan Kerusakan",
+      match: pathname.includes("laporan-sarpras"),
+    },
   ];
 
   return (
     <div>
       <h3 className="text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3">
-        <span className="lg:hidden lg:sidebar-expanded:block 2xl:block">Menu Janitor</span>
+        <span className="lg:hidden lg:sidebar-expanded:block 2xl:block">
+          Menu Janitor
+        </span>
       </h3>
+
       <ul className="mt-3">
         <SidebarLinkGroup activecondition={pathname === "/janitor" || pathname === "/janitor/"}>
           {() => (
             <NavLink end to="/janitor" className={({ isActive }) => navLinkClass(isActive)}>
               <div className="flex items-center">
                 <span className="text-lg mr-3">🧹</span>
-                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Dashboard Janitor</span>
+                <span className="text-sm font-medium ml-4">
+                  Dashboard Janitor
+                </span>
               </div>
             </NavLink>
           )}
         </SidebarLinkGroup>
+
         {opsItems.map((item) => (
           <SidebarLinkGroup key={item.to} activecondition={item.match}>
             {() => (
               <NavLink to={item.to} className={({ isActive }) => navLinkClass(isActive)}>
                 <div className="flex items-center">
                   <span className="text-lg mr-3">{item.icon}</span>
-                  <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">{item.label}</span>
+                  <span className="text-sm font-medium">
+                    {item.label}
+                  </span>
                 </div>
               </NavLink>
             )}
           </SidebarLinkGroup>
         ))}
       </ul>
-      <h3 className="text-xs uppercase text-gray-400 font-semibold pl-3 mt-6">
-        <span className="lg:hidden lg:sidebar-expanded:block 2xl:block">Buat Peminjaman</span>
-      </h3>
-      <ul className="mt-3">
-        <PeminjamanMenu base="/janitor" pathname={pathname} setSidebarExpanded={setSidebarExpanded} hideDashboard />
-      </ul>
     </div>
   );
-}
+};
 
 function PeminjamNav({ pathname, setSidebarExpanded }) {
   return (

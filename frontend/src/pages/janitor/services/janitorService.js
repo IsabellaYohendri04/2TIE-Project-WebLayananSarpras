@@ -9,11 +9,14 @@ export const getSarpras = (params = {}) =>
 export const getSarprasMonitoring = () =>
   api.get("/sarpras/monitoring").then((res) => res.data);
 
-export const createSarpras = (data) =>
-  api.post("/sarpras", data).then((res) => res.data);
+export const createSarpras = (formData) =>
+  api.post("/sarpras", formData).then((res) => res.data);
 
-export const updateSarpras = (id, data) =>
-  api.put(`/sarpras/${id}`, data).then((res) => res.data);
+export const updateSarpras = (id, formData) =>
+  api.put(`/sarpras/${id}`, formData).then((res) => res.data);
+
+export const deleteSarpras = (id) =>
+  api.delete(`/sarpras/${id}`).then((res) => res.data);
 
 export const getPeminjaman = (params = {}) =>
   api.get("/peminjaman", { params }).then((res) => res.data);
