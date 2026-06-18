@@ -101,6 +101,32 @@ function attachSarprasRoutes(app) {
     }
   });
 
+  // Endpoint khusus peminjam
+  app.get("/api/public/barang", authenticate, async (_req, res) => {
+    try {
+      const pool = getPool();
+      const [rows] = await pool.query(`
+        SELECT *
+        FROM sarpras
+        WHERE tipe = 'barang'
+        AND status = 'Tersedia'
+        ORDER BY nama ASC
+      `);
+
+      const data = rows.map(formatSarprasRow);
+
+      res.json({
+        success: true,
+        data,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  });
+
   app.get(
     "/api/sarpras/monitoring",
     authenticate,
