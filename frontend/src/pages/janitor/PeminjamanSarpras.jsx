@@ -1,88 +1,143 @@
 import React, { useEffect, useState } from "react";
-// pastikan path ini sesuai struktur project kamu
 import { getPeminjaman } from "./services/janitorService";
+
+const statusStyle = {
+  Menunggu: "bg-amber-100 text-amber-800 border-amber-200",
+  Disetujui: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  Ditolak: "bg-red-100 text-red-800 border-red-200",
+  APPROVED: "bg-emerald-100 text-emerald-800 border-emerald-200",
+};
+
+const tipeIcon = {
+  barang: "📦",
+  ruangan: "🏢",
+  laboratorium: "🧪",
+};
 
 export default function PeminjamanSarpras() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError("");
-
       try {
-        const res = await getPeminjaman({ status: "approved" });
-        setData(res.data);
+        const res = await getPeminjaman();
+        setData(res.data || []);
       } catch (err) {
-        setError(
-          err.response?.data?.message ||
-            "Gagal memuat peminjaman. Pastikan server berjalan."
-        );
+        setError(err.response?.data?.message || "Gagal memuat peminjaman.");
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
+  const filtered = data.filter((item) => {
+    if (filter === "pending") return item.status === "Menunggu";
+    if (filter === "approved") return item.status === "Disetujui" || item.status === "APPROVED";
+    return true;
+  });
+
+  const counts = {
+    all: data.length,
+    pending: data.filter((d) => d.status === "Menunggu").length,
+    approved: data.filter((d) => d.status === "Disetujui" || d.status === "APPROVED").length,
+  };
+
   return (
-    <main className="grow bg-slate-50">
+    <main className="grow min-h-screen bg-[radial-gradient(circle_at_top,_#ecfdf5,_#f8fafc_50%)]">
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">
-            Peminjaman Sarpras 📑
-          </h1>
-          <p className="text-gray-500 mt-2">
-            Hanya menampilkan peminjaman yang sudah disetujui (read-only)
-          </p>
+        <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-r from-emerald-700 via-teal-700 to-cyan-700 p-8 shadow-2xl mb-8">
+          <div className="absolute right-0 top-0 opacity-10 text-[160px] select-none">📑</div>
+          <div className="relative z-10">
+            <h1 className="text-3xl font-bold text-white">Peminjaman Sarpras</h1>
+            <p className="text-emerald-100 mt-2">
+              Semua pengajuan peminjaman langsung masuk ke sini — pantau real-time
+            </p>
+          </div>
         </div>
 
         {error && (
-          <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-xl mb-6">
-            {error}
-          </div>
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl mb-6">{error}</div>
         )}
 
-        <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          {[
+            { key: "all", label: "Semua Pengajuan", value: counts.all, color: "from-slate-600 to-slate-800" },
+            { key: "pending", label: "Menunggu", value: counts.pending, color: "from-amber-500 to-orange-600" },
+            { key: "approved", label: "Disetujui", value: counts.approved, color: "from-emerald-500 to-teal-600" },
+          ].map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => setFilter(c.key)}
+              className={`text-left rounded-2xl p-5 transition-all duration-300 ${
+                filter === c.key ? "ring-4 ring-emerald-300 scale-[1.02]" : "hover:scale-[1.01]"
+              } bg-gradient-to-br ${c.color} text-white shadow-lg`}
+            >
+              <p className="text-white/80 text-sm">{c.label}</p>
+              <p className="text-3xl font-black mt-1">{c.value}</p>
+            </button>
+          ))}
+        </div>
+
+        <div className="bg-white rounded-[28px] shadow-xl border border-slate-100 overflow-hidden">
           {loading ? (
-            <div className="p-12 text-center text-gray-500">
-              Memuat data...
+            <div className="p-16 text-center">
+              <div className="w-10 h-10 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto" />
+              <p className="text-gray-500 mt-4">Memuat data peminjaman...</p>
             </div>
-          ) : data.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">
-              Belum ada peminjaman yang disetujui.
+          ) : filtered.length === 0 ? (
+            <div className="p-16 text-center text-gray-500">
+              <span className="text-5xl block mb-4">📭</span>
+              Belum ada pengajuan {filter !== "all" ? "dengan status ini" : ""}.
             </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="text-left p-4">Item</th>
-                  <th className="text-left p-4">Peminjam</th>
-                  <th className="text-left p-4">Tanggal</th>
-                  <th className="text-left p-4">Tipe</th>
-                  <th className="text-left p-4">Status</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {data.map((item) => (
-                  <tr key={`${item.tipe}-${item.id}`} className="border-t">
-                    <td className="p-4 font-medium">{item.item}</td>
-                    <td className="p-4">{item.peminjam}</td>
-                    <td className="p-4">{item.tanggal}</td>
-                    <td className="p-4 capitalize">{item.tipe}</td>
-                    <td className="p-4">
-                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs">
-                        {item.status}
-                      </span>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+                    <th className="text-left p-4 font-semibold">Item</th>
+                    <th className="text-left p-4 font-semibold">Peminjam</th>
+                    <th className="text-left p-4 font-semibold">Periode</th>
+                    <th className="text-left p-4 font-semibold">Tipe</th>
+                    <th className="text-left p-4 font-semibold">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filtered.map((item) => (
+                    <tr key={`${item.tipe}-${item.id}`} className="border-t border-slate-100 hover:bg-emerald-50/40 transition">
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <span>{tipeIcon[item.tipe] || "📋"}</span>
+                          <span className="font-medium text-gray-900">{item.item}</span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <p className="font-medium">{item.peminjam || item.nama}</p>
+                        {item.nim && <p className="text-xs text-gray-500">{item.nim} · {item.prodi}</p>}
+                      </td>
+                      <td className="p-4 text-gray-600">
+                        {item.tanggal}
+                        {item.tanggal_kembali && item.tanggal_kembali !== item.tanggal && (
+                          <span> — {item.tanggal_kembali}</span>
+                        )}
+                      </td>
+                      <td className="p-4 capitalize text-gray-600">{item.tipe}</td>
+                      <td className="p-4">
+                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold border ${statusStyle[item.status] || "bg-slate-100"}`}>
+                          {item.status === "APPROVED" ? "Disetujui" : item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

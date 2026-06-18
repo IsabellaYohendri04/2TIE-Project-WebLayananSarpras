@@ -94,11 +94,12 @@ export default function FormPeminjamanDormitori() {
   if (submitted) {
     return (
       <PageShell>
-        <ContentCard className="max-w-xl mx-auto text-center py-20 border-0 shadow-2xl">
+        <ContentCard className="max-w-xl mx-auto text-center py-20 border-0 shadow-2xl bg-gradient-to-br from-white to-violet-50">
           <div className="text-6xl mb-4">🏠</div>
           <h2 className="text-2xl font-bold mb-2">Pengajuan Dormitori Berhasil!</h2>
-          <p className="text-gray-500 mb-6">{selectedLabels.length} kamar dipilih</p>
-          <button onClick={() => navigate(`${base}/riwayat-peminjaman`)} className="px-6 py-3 bg-violet-600 text-white rounded-xl">Riwayat</button>
+          <p className="text-gray-500 mb-2">{selectedLabels.length} kamar dipilih</p>
+          <p className="text-sm text-violet-600 mb-6">Pengajuan langsung masuk ke dashboard Janitor.</p>
+          <button onClick={() => navigate(`${base}/riwayat-peminjaman`)} className="px-6 py-3 bg-violet-600 text-white rounded-xl hover:bg-violet-700 transition">Riwayat</button>
         </ContentCard>
       </PageShell>
     );

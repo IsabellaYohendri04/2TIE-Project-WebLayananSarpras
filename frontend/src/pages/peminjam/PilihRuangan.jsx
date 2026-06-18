@@ -85,28 +85,47 @@ function PilihRuangan() {
   };
 
   const handleLaboratorium = () => {
-    navigate(`${base}/peminjaman-lab/form?gedung=${gedungSlug}`);
+    if (MULTI_FLOOR_GEDUNG.includes(gedungSlug) && floorConfig?.labFloors?.length) {
+      setParams({ tipe: "laboratorium", lantai: "" });
+    } else {
+      navigate(`${base}/peminjaman-lab/form?gedung=${gedungSlug}`);
+    }
   };
 
-  const filteredKelas =
-    lantai
-      ? ruanganList.filter((r) => r.tipe === "kelas" && r.lantai === Number(lantai))
-      : [];
+  const filteredKelas = lantai
+    ? ruanganList.filter((r) => r.tipe === "kelas" && r.lantai === Number(lantai))
+    : [];
+
+  const filteredLab = lantai
+    ? labList.filter((l) => l.lantai === Number(lantai))
+    : [];
 
   const availableKelasFloors = floorConfig?.kelasFloors || [1, 2];
   const availableLabFloors = floorConfig?.labFloors || [3];
+
+  const floorHint = (() => {
+    if (!floorConfig) return null;
+    if (gedungSlug === "gedung-utama" || gedungSlug === "gedung-serba-guna") {
+      return "Lt.1: ruang 130–150 · Lt.2: ruang 210–240 · Lt.3: laboratorium";
+    }
+    if (gedungSlug === "workshop-listrik" || gedungSlug === "workshop-mesin") {
+      return "Lt.1: kelas 101–110 · Lt.2: laboratorium";
+    }
+    return null;
+  })();
 
   return (
     <PageShell>
       <PageHeader
         title="Peminjaman Ruangan"
-        subtitle="Pilih gedung, jenis fasilitas, lantai, lalu ruangan yang tersedia"
+        subtitle="Pilih gedung → kelas atau laboratorium → lantai → ruangan/lab"
+        badge="🏫 Wizard Interaktif"
       />
 
-      {/* Gedung grid */}
       {!gedungSlug && (
         <ContentCard className="bg-gradient-to-br from-white via-violet-50/30 to-indigo-50/40 border-0 shadow-xl shadow-slate-200/60">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Pilih Gedung</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Pilih Gedung</h2>
+          <p className="text-gray-500 mb-6 text-sm">Setiap gedung memiliki alur peminjaman berbeda</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {gedungList.map((g) => (
               <ModernCard
@@ -122,32 +141,35 @@ function PilihRuangan() {
         </ContentCard>
       )}
 
-      {/* Kelas vs Laboratorium */}
       {gedungSlug && !tipe && !DIRECT_FORM_GEDUNG[gedungSlug] && (
         <ContentCard className="border-0 shadow-xl shadow-slate-200/50">
-          <button type="button" onClick={() => setSearchParams({})} className="text-sm font-medium text-violet-600 hover:text-violet-800 mb-6 flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setSearchParams({})}
+            className="text-sm font-medium text-violet-600 hover:text-violet-800 mb-6 flex items-center gap-1 transition"
+          >
             ← Ganti Gedung
           </button>
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900">
               {gedungTerpilih?.icon} {gedungTerpilih?.nama}
             </h2>
-            <p className="text-gray-500 mt-1">Pilih jenis fasilitas yang ingin dipinjam</p>
+            <p className="text-gray-500 mt-1">Pilih jenis fasilitas — kelas atau laboratorium</p>
           </div>
           <div className="grid sm:grid-cols-2 gap-6">
             <ModernCard
               icon="🎓"
               title="Kelas"
-              subtitle={`Ruang kelas per lantai — ${kelasCount} ruangan tersedia`}
-              badge="Form Ruangan"
+              subtitle={`Ruang kelas per lantai — ${kelasCount} ruangan · form peminjaman ruangan`}
+              badge="Step-by-step"
               accent="blue"
               onClick={handleKelas}
             />
             <ModernCard
               icon="🧪"
               title="Laboratorium"
-              subtitle={`Lab praktikum — ${labCount} lab tersedia · langsung ke form lab`}
-              badge="Form Lab"
+              subtitle={`Lab praktikum — ${labCount} lab · form peminjaman laboratorium`}
+              badge="Step-by-step"
               accent="emerald"
               onClick={handleLaboratorium}
             />
@@ -155,33 +177,48 @@ function PilihRuangan() {
         </ContentCard>
       )}
 
-      {/* Kelas: pilih lantai */}
       {gedungSlug && tipe === "kelas" && !lantai && (
         <ContentCard className="border-0 shadow-xl">
-          <button type="button" onClick={() => setParams({ tipe: "" })} className="text-sm text-violet-600 mb-6">← Kembali</button>
-          <h2 className="text-xl font-bold mb-6">Pilih Lantai — Kelas</h2>
+          <button type="button" onClick={() => setParams({ tipe: "" })} className="text-sm text-violet-600 mb-6 hover:underline">
+            ← Kembali
+          </button>
+          <h2 className="text-xl font-bold mb-2">Pilih Lantai — Kelas</h2>
+          <p className="text-gray-500 text-sm mb-6">Hanya ruangan di lantai terpilih yang ditampilkan</p>
           <FloorPicker
             floors={availableKelasFloors}
             selected={null}
             onSelect={(f) => setParams({ lantai: f })}
-            label={`Lantai dengan ruang kelas (${gedungTerpilih?.nama})`}
+            label={`Lantai kelas — ${gedungTerpilih?.nama}`}
           />
-          {floorConfig?.kelasRange && (
-            <p className="text-sm text-gray-500 mt-6">
-              Lt.1: ruang 130–150 · Lt.2: ruang 210–240 · Lt.3: laboratorium
-            </p>
-          )}
+          {floorHint && <p className="text-sm text-gray-500 mt-6 bg-slate-50 rounded-xl p-4">{floorHint}</p>}
         </ContentCard>
       )}
 
-      {/* Kelas: list ruangan per lantai */}
+      {gedungSlug && tipe === "laboratorium" && !lantai && (
+        <ContentCard className="border-0 shadow-xl">
+          <button type="button" onClick={() => setParams({ tipe: "" })} className="text-sm text-violet-600 mb-6 hover:underline">
+            ← Kembali
+          </button>
+          <h2 className="text-xl font-bold mb-2">Pilih Lantai — Laboratorium</h2>
+          <p className="text-gray-500 text-sm mb-6">Lantai 3 berisi laboratorium praktikum</p>
+          <FloorPicker
+            floors={availableLabFloors}
+            selected={null}
+            onSelect={(f) => setParams({ lantai: f })}
+            label={`Lantai lab — ${gedungTerpilih?.nama}`}
+          />
+        </ContentCard>
+      )}
+
       {gedungSlug && tipe === "kelas" && lantai && (
         <ContentCard className="border-0 shadow-xl">
-          <button type="button" onClick={() => setParams({ lantai: "" })} className="text-sm text-violet-600 mb-4">← Ganti Lantai</button>
+          <button type="button" onClick={() => setParams({ lantai: "" })} className="text-sm text-violet-600 mb-4 hover:underline">
+            ← Ganti Lantai
+          </button>
           <h2 className="text-xl font-bold text-gray-900 mb-2">
             Kelas Lantai {lantai} — {gedungTerpilih?.nama}
           </h2>
-          <p className="text-gray-500 mb-6">Klik ruangan untuk membuka form peminjaman</p>
+          <p className="text-gray-500 mb-6">Klik ruangan untuk membuka form peminjaman ruangan</p>
 
           {loading ? (
             <div className="flex justify-center py-16">
@@ -215,6 +252,54 @@ function PilihRuangan() {
                     </div>
                     <p className="text-sm text-gray-600">{ruang.nama}</p>
                     <p className="text-xs text-gray-400 mt-2">👥 {ruang.kapasitas} orang</p>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </ContentCard>
+      )}
+
+      {gedungSlug && tipe === "laboratorium" && lantai && (
+        <ContentCard className="border-0 shadow-xl">
+          <button type="button" onClick={() => setParams({ lantai: "" })} className="text-sm text-violet-600 mb-4 hover:underline">
+            ← Ganti Lantai
+          </button>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            Laboratorium Lantai {lantai} — {gedungTerpilih?.nama}
+          </h2>
+          <p className="text-gray-500 mb-6">Klik lab untuk membuka form peminjaman laboratorium</p>
+
+          {loading ? (
+            <div className="flex justify-center py-16">
+              <div className="w-10 h-10 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
+            </div>
+          ) : filteredLab.length === 0 ? (
+            <p className="text-center text-gray-500 py-12">Belum ada laboratorium di lantai ini.</p>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredLab.map((lab) => {
+                const st = statusConfig[lab.status] || statusConfig.tersedia;
+                return (
+                  <button
+                    key={lab.id}
+                    type="button"
+                    disabled={lab.status === "penuh"}
+                    onClick={() =>
+                      navigate(`${base}/peminjaman-lab/form?labId=${lab.id}&gedung=${gedungSlug}`)
+                    }
+                    className={`group p-5 rounded-2xl border-2 text-left transition-all duration-300 ${
+                      lab.status === "penuh"
+                        ? "opacity-40 cursor-not-allowed border-slate-100"
+                        : "border-slate-200 hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-100 bg-white hover:-translate-y-0.5"
+                    }`}
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-2xl">🧪</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${st.cls}`}>{st.label}</span>
+                    </div>
+                    <p className="font-bold text-gray-900 group-hover:text-emerald-600">{lab.nama}</p>
+                    <p className="text-xs text-gray-500 mt-1">Kode {lab.kode} · 👥 {lab.kapasitas}</p>
                   </button>
                 );
               })}

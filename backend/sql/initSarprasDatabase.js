@@ -126,6 +126,61 @@ async function initSarprasDatabase() {
     )
   `);
 
+  // ================= GEDUNG / RUANGAN / LAB =================
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS gedung (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      slug VARCHAR(50) NOT NULL UNIQUE,
+      nama VARCHAR(100) NOT NULL,
+      icon VARCHAR(10) DEFAULT '🏢',
+      deskripsi TEXT,
+      lantai INT DEFAULT 1,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS ruangan (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      gedung_id INT NOT NULL,
+      kode VARCHAR(20) NOT NULL,
+      nama VARCHAR(100) NOT NULL,
+      tipe ENUM('kelas','kamar','olahraga','umum') DEFAULT 'kelas',
+      lantai INT NOT NULL DEFAULT 1,
+      kapasitas INT DEFAULT 40,
+      fasilitas JSON,
+      status ENUM('tersedia','terbatas','penuh') DEFAULT 'tersedia',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (gedung_id) REFERENCES gedung(id) ON DELETE CASCADE
+    )
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS laboratorium (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      gedung_id INT NOT NULL,
+      kode VARCHAR(20) NOT NULL,
+      nama VARCHAR(100) NOT NULL,
+      lantai INT NOT NULL DEFAULT 1,
+      kapasitas INT DEFAULT 30,
+      fasilitas JSON,
+      status ENUM('tersedia','terbatas','penuh') DEFAULT 'tersedia',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (gedung_id) REFERENCES gedung(id) ON DELETE CASCADE
+    )
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS barang (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      nama VARCHAR(200) NOT NULL,
+      kategori VARCHAR(100) DEFAULT 'Umum',
+      stok INT DEFAULT 1,
+      status ENUM('tersedia','terbatas','habis') DEFAULT 'tersedia',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // ================= EXTRA COLS SAFETY =================
   const extraCols = [
     "user_id INT NULL",
@@ -150,23 +205,95 @@ async function initSarprasDatabase() {
   }
 
   // ================= SEED USERS =================
-  const [userCount] = await db.query("SELECT COUNT(*) as total FROM users");
+  const demoUsers = [
+    ["admin@sarpras.ac.id", "admin123", "pegawai_sarpras", "Admin Sarpras", "19850101", null, "Sistem", "081234567890"],
+    ["janitor@sarpras.ac.id", "janitor123", "janitor", "Budi Janitor", "19900102", null, "Sarpras", "081234567891"],
+    ["peminjam@sarpras.ac.id", "peminjam123", "peminjam", "Andi Mahasiswa", null, "220101001", "Teknik Informatika", "081234567892"],
+  ];
 
-  if (userCount[0].total === 0) {
-    await db.query(
-      `INSERT INTO users (email,password,role,nama,nip,prodi,no_hp,status)
-       VALUES (?,?,?,?,?,?,?,?)`,
-      [
-        "admin@sarpras.ac.id",
-        await bcrypt.hash("admin123", 10),
-        "pegawai_sarpras",
-        "Admin Sarpras",
-        "19850101",
-        "Sistem",
-        "081234567890",
-        "aktif",
-      ]
-    );
+  for (const [email, pass, role, nama, nip, nim, prodi, no_hp] of demoUsers) {
+    const [exists] = await db.query("SELECT id FROM users WHERE email = ?", [email]);
+    if (exists.length === 0) {
+      await db.query(
+        `INSERT INTO users (email,password,role,nama,nip,nim,prodi,no_hp,status)
+         VALUES (?,?,?,?,?,?,?,?,?)`,
+        [email, await bcrypt.hash(pass, 10), role, nama, nip, nim, prodi, no_hp, "aktif"]
+      );
+    }
+  }
+
+  // ================= SEED GEDUNG & FASILITAS =================
+  const [gedungCount] = await db.query("SELECT COUNT(*) as total FROM gedung");
+  if (gedungCount[0].total === 0) {
+    const gedungSeed = [
+      ["gedung-utama", "Gedung Utama", "🏛️", "Gedung pusat kegiatan akademik", 3],
+      ["gedung-serba-guna", "Gedung Serba Guna", "🏟️", "Event, seminar & kegiatan kampus", 3],
+      ["gedung-olahraga", "Gedung Olahraga", "🏀", "Fasilitas olahraga", 1],
+      ["workshop-listrik", "Workshop Listrik", "⚡", "Praktikum teknik elektro", 2],
+      ["workshop-mesin", "Workshop Mesin", "🔧", "Praktikum teknik mesin", 2],
+      ["dormitori", "Dormitori", "🏠", "Asrama mahasiswa", 3],
+    ];
+    for (const g of gedungSeed) {
+      await db.query(
+        "INSERT INTO gedung (slug, nama, icon, deskripsi, lantai) VALUES (?, ?, ?, ?, ?)",
+        g
+      );
+    }
+
+    const [gedungRows] = await db.query("SELECT id, slug FROM gedung");
+    const gedungMap = Object.fromEntries(gedungRows.map((g) => [g.slug, g.id]));
+
+    async function seedKelas(slug, lantai, from, to) {
+      const gid = gedungMap[slug];
+      for (let n = from; n <= to; n++) {
+        const kode = String(n);
+        const status = n % 7 === 0 ? "terbatas" : n % 11 === 0 ? "penuh" : "tersedia";
+        await db.query(
+          `INSERT INTO ruangan (gedung_id, kode, nama, tipe, lantai, kapasitas, fasilitas, status)
+           VALUES (?, ?, ?, 'kelas', ?, 40, ?, ?)`,
+          [gid, kode, `Ruang Kelas ${kode}`, lantai, JSON.stringify(["Proyektor", "AC", "Whiteboard"]), status]
+        );
+      }
+    }
+
+    async function seedKamar(slug, lantai, from, to) {
+      const gid = gedungMap[slug];
+      for (let n = from; n <= to; n++) {
+        const kode = `D${lantai}${String(n).padStart(2, "0")}`;
+        const status = n % 9 === 0 ? "penuh" : "tersedia";
+        await db.query(
+          `INSERT INTO ruangan (gedung_id, kode, nama, tipe, lantai, kapasitas, fasilitas, status)
+           VALUES (?, ?, ?, 'kamar', ?, 4, ?, ?)`,
+          [gid, kode, `Kamar ${kode}`, lantai, JSON.stringify(["Kasur", "Lemari"]), status]
+        );
+      }
+    }
+
+    async function seedLab(slug, lantai, labs) {
+      const gid = gedungMap[slug];
+      for (let i = 0; i < labs.length; i++) {
+        const kode = `L${lantai}0${i + 1}`;
+        await db.query(
+          `INSERT INTO laboratorium (gedung_id, kode, nama, lantai, kapasitas, fasilitas, status)
+           VALUES (?, ?, ?, ?, 30, ?, 'tersedia')`,
+          [gid, kode, labs[i], lantai, JSON.stringify(["Meja Lab", "AC", "Alat Praktikum"])]
+        );
+      }
+    }
+
+    await seedKelas("gedung-utama", 1, 130, 150);
+    await seedKelas("gedung-utama", 2, 210, 240);
+    await seedKelas("gedung-serba-guna", 1, 130, 150);
+    await seedKelas("gedung-serba-guna", 2, 210, 240);
+    await seedKelas("workshop-listrik", 1, 101, 110);
+    await seedKelas("workshop-mesin", 1, 101, 110);
+    await seedKamar("dormitori", 1, 1, 12);
+    await seedKamar("dormitori", 2, 1, 12);
+    await seedKamar("dormitori", 3, 1, 12);
+    await seedLab("gedung-utama", 3, ["Lab Komputer", "Lab Kimia", "Lab Fisika", "Lab Microbiology", "Lab Bahasa"]);
+    await seedLab("gedung-serba-guna", 3, ["Lab Multimedia", "Lab Desain", "Lab Prototyping", "Lab IoT"]);
+    await seedLab("workshop-listrik", 2, ["Lab Elektronika", "Lab PLC", "Lab Instrumentasi"]);
+    await seedLab("workshop-mesin", 2, ["Lab CNC", "Lab Las", "Lab Metrologi"]);
   }
 
   // ================= SEED PEMINJAMAN =================
