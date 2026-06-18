@@ -57,7 +57,7 @@ export const createLaboratorium = (data) => api.post("/laboratorium", data).then
 export const updateLaboratorium = (id, data) => api.put(`/laboratorium/${id}`, data).then((r) => r.data);
 export const deleteLaboratorium = (id) => api.delete(`/laboratorium/${id}`).then((r) => r.data);
 
-export const getBarangMaster = () => api.get("/barang").then((r) => r.data);
+export const getBarangMaster = () =>api.get("/public/barang").then((r) => r.data.data);
 export const createBarangMaster = (data) => api.post("/barang", data).then((r) => r.data);
 export const updateBarangMaster = (id, data) => api.put(`/barang/${id}`, data).then((r) => r.data);
 export const deleteBarangMaster = (id) => api.delete(`/barang/${id}`).then((r) => r.data);
