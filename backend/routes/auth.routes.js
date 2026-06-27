@@ -34,7 +34,6 @@ function sanitizeUser(user) {
     nama: user.nama,
     nip: user.nip,
     nim: user.nim,
-    jabatan: user.jabatan,
     divisi: user.divisi,
     prodi: user.prodi,
     no_hp: user.no_hp,

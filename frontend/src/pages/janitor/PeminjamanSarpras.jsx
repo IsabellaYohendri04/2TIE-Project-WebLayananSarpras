@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import TablePagination, { PAGE_LIMIT } from "../../components/TablePagination";
+import { useDebouncedValue } from "../../hooks/usePaginatedFilter";
 import { getPeminjaman } from "./services/janitorService";
 
 const statusStyle = {
@@ -19,6 +21,9 @@ export default function PeminjamanSarpras() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,11 +41,34 @@ export default function PeminjamanSarpras() {
     fetchData();
   }, []);
 
-  const filtered = data.filter((item) => {
-    if (filter === "pending") return item.status === "Menunggu";
-    if (filter === "approved") return item.status === "Disetujui" || item.status === "APPROVED";
-    return true;
-  });
+  useEffect(() => {
+    setPage(1);
+  }, [filter, debouncedSearch]);
+
+  const filtered = useMemo(() => {
+    let result = data;
+    if (filter === "pending") result = result.filter((item) => item.status === "Menunggu");
+    else if (filter === "approved") {
+      result = result.filter((item) => item.status === "Disetujui" || item.status === "APPROVED");
+    }
+    if (debouncedSearch.trim()) {
+      const term = debouncedSearch.toLowerCase();
+      result = result.filter(
+        (item) =>
+          (item.item || "").toLowerCase().includes(term) ||
+          (item.peminjam || item.nama || "").toLowerCase().includes(term) ||
+          (item.nim || "").toLowerCase().includes(term)
+      );
+    }
+    return result;
+  }, [data, filter, debouncedSearch]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_LIMIT));
+  const safePage = Math.min(page, totalPages);
+  const paginated = useMemo(() => {
+    const start = (safePage - 1) * PAGE_LIMIT;
+    return filtered.slice(start, start + PAGE_LIMIT);
+  }, [filtered, safePage]);
 
   const counts = {
     all: data.length,
@@ -85,6 +113,19 @@ export default function PeminjamanSarpras() {
           ))}
         </div>
 
+        <div className="flex justify-end mb-6">
+          <div className="relative w-full sm:w-72">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cari item, peminjam..."
+              className="w-full border border-slate-200 rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+            <span className="absolute left-4 top-3 text-lg">🔍</span>
+          </div>
+        </div>
+
         <div className="bg-white rounded-[28px] shadow-xl border border-slate-100 overflow-hidden">
           {loading ? (
             <div className="p-16 text-center">
@@ -109,7 +150,7 @@ export default function PeminjamanSarpras() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((item) => (
+                  {paginated.map((item) => (
                     <tr key={`${item.tipe}-${item.id}`} className="border-t border-slate-100 hover:bg-emerald-50/40 transition">
                       <td className="p-4">
                         <div className="flex items-center gap-2">
@@ -138,6 +179,15 @@ export default function PeminjamanSarpras() {
                 </tbody>
               </table>
             </div>
+          )}
+          {!loading && filtered.length > 0 && (
+            <TablePagination
+              page={safePage}
+              totalPages={totalPages}
+              total={filtered.length}
+              onPageChange={setPage}
+              itemLabel="pengajuan"
+            />
           )}
         </div>
       </div>

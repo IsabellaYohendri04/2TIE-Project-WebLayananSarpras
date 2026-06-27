@@ -1,23 +1,55 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { FiTrash2 } from "react-icons/fi";
+import TablePagination, { PAGE_LIMIT } from "../../components/TablePagination";
+import { useDebouncedValue } from "../../hooks/usePaginatedFilter";
 
-function PeminjamanAdmin({ title, tipe, fetchFn, updateFn, deleteFn }) {
-  const [data, setData] = useState([]);
+function PeminjamanAdmin({ title, tipe, fetchFn, updateFn, deleteFn, filterFn }) {
+  const [allData, setAllData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
+  const [page, setPage] = useState(1);
+
+  const itemField = tipe === "barang" ? "barang" : tipe === "ruangan" ? "ruangan" : "laboratorium";
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      setData(await fetchFn());
+      const rows = await fetchFn();
+      setAllData(filterFn ? rows.filter(filterFn) : rows);
     } catch (err) {
       setError(err.response?.data?.message || "Gagal memuat data");
     } finally {
       setLoading(false);
     }
-  }, [fetchFn]);
+  }, [fetchFn, filterFn]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, filterFn]);
+
+  const filteredData = useMemo(() => {
+    if (!debouncedSearch.trim()) return allData;
+    const term = debouncedSearch.toLowerCase();
+    return allData.filter(
+      (item) =>
+        (item.nama || "").toLowerCase().includes(term) ||
+        (item.nim || "").toLowerCase().includes(term) ||
+        (item.prodi || "").toLowerCase().includes(term) ||
+        (item[itemField] || item.item || "").toLowerCase().includes(term) ||
+        (item.kategori || "").toLowerCase().includes(term)
+    );
+  }, [allData, debouncedSearch, itemField]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / PAGE_LIMIT));
+  const safePage = Math.min(page, totalPages);
+  const data = useMemo(() => {
+    const start = (safePage - 1) * PAGE_LIMIT;
+    return filteredData.slice(start, start + PAGE_LIMIT);
+  }, [filteredData, safePage]);
 
   const handleStatus = async (id, status) => {
     const catatan = window.prompt("Catatan admin (opsional):", "") || "";
@@ -52,9 +84,22 @@ function PeminjamanAdmin({ title, tipe, fetchFn, updateFn, deleteFn }) {
         {error && <div className="bg-red-100 text-red-700 p-4 rounded-xl mb-4">{error}</div>}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white p-5 rounded-2xl shadow"><p className="text-gray-500 text-sm">Total</p><p className="text-2xl font-bold">{data.length}</p></div>
-          <div className="bg-white p-5 rounded-2xl shadow"><p className="text-gray-500 text-sm">Menunggu</p><p className="text-2xl font-bold text-yellow-600">{data.filter((d) => d.status === "Menunggu").length}</p></div>
-          <div className="bg-white p-5 rounded-2xl shadow"><p className="text-gray-500 text-sm">Disetujui</p><p className="text-2xl font-bold text-green-600">{data.filter((d) => d.status === "Disetujui").length}</p></div>
+          <div className="bg-white p-5 rounded-2xl shadow"><p className="text-gray-500 text-sm">Total</p><p className="text-2xl font-bold">{allData.length}</p></div>
+          <div className="bg-white p-5 rounded-2xl shadow"><p className="text-gray-500 text-sm">Menunggu</p><p className="text-2xl font-bold text-yellow-600">{allData.filter((d) => d.status === "Menunggu").length}</p></div>
+          <div className="bg-white p-5 rounded-2xl shadow"><p className="text-gray-500 text-sm">Disetujui</p><p className="text-2xl font-bold text-green-600">{allData.filter((d) => d.status === "Disetujui").length}</p></div>
+        </div>
+
+        <div className="flex justify-end mb-6">
+          <div className="relative w-full sm:w-72">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cari peminjam, item..."
+              className="w-full border border-gray-200 rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            />
+            <span className="absolute left-4 top-3 text-lg">🔍</span>
+          </div>
         </div>
 
         <div className="bg-white rounded-3xl shadow-lg overflow-x-auto border border-slate-100">
@@ -71,7 +116,7 @@ function PeminjamanAdmin({ title, tipe, fetchFn, updateFn, deleteFn }) {
             <tbody>
               {loading ? (
                 <tr><td colSpan={5} className="p-8 text-center">Memuat...</td></tr>
-              ) : data.length === 0 ? (
+              ) : filteredData.length === 0 ? (
                 <tr><td colSpan={5} className="p-8 text-center text-gray-500">Belum ada pengajuan</td></tr>
               ) : data.map((item) => (
                 <tr key={item.id} className="border-t hover:bg-gray-50">
@@ -79,7 +124,7 @@ function PeminjamanAdmin({ title, tipe, fetchFn, updateFn, deleteFn }) {
                     <p className="font-medium">{item.nama}</p>
                     <p className="text-xs text-gray-500">{item.nim} · {item.prodi}</p>
                   </td>
-                  <td className="p-4">{item.item}</td>
+                  <td className="p-4">{item[itemField] || item.item}</td>
                   <td className="p-4">{item.tanggalPinjam} — {item.tanggalKembali}<br /><span className="text-xs text-gray-500">{item.jamMulai} - {item.jamSelesai}</span></td>
                   <td className="p-4"><span className={`px-3 py-1 rounded-full text-xs ${statusColor(item.status)}`}>{item.status}</span></td>
                   <td className="p-4 text-center whitespace-nowrap">
@@ -95,6 +140,15 @@ function PeminjamanAdmin({ title, tipe, fetchFn, updateFn, deleteFn }) {
               ))}
             </tbody>
           </table>
+          {!loading && filteredData.length > 0 && (
+            <TablePagination
+              page={safePage}
+              totalPages={totalPages}
+              total={filteredData.length}
+              onPageChange={setPage}
+              itemLabel="pengajuan"
+            />
+          )}
         </div>
       </div>
     </main>

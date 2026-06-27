@@ -1,5 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import TablePagination, { PAGE_LIMIT } from "../../components/TablePagination";
+import { useDebouncedValue } from "../../hooks/usePaginatedFilter";
 import {
   getGedung,
   getRuangan,
@@ -20,6 +23,10 @@ const EMPTY = {
 };
 
 export default function KelolaRuangan() {
+  const [searchParams] = useSearchParams();
+  const gedungFilter = searchParams.get("gedung") || "";
+  const tipeFilter = searchParams.get("tipe") || "";
+
   const [gedungList, setGedungList] = useState([]);
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,11 +34,19 @@ export default function KelolaRuangan() {
   const [form, setForm] = useState(EMPTY);
   const [editId, setEditId] = useState(null);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
+  const [page, setPage] = useState(1);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [gedung, ruangan] = await Promise.all([getGedung(), getRuangan()]);
+      const params = {};
+      if (gedungFilter) params.gedung = gedungFilter;
+      if (tipeFilter === "olahraga") params.tipe = "olahraga";
+      if (tipeFilter === "dormitori") params.tipe = "kamar";
+
+      const [gedung, ruangan] = await Promise.all([getGedung(), getRuangan(params)]);
       setGedungList(gedung);
       setList(ruangan);
     } catch (err) {
@@ -39,9 +54,32 @@ export default function KelolaRuangan() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [gedungFilter, tipeFilter]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [gedungFilter, tipeFilter, debouncedSearch]);
+
+  const filteredList = useMemo(() => {
+    if (!debouncedSearch.trim()) return list;
+    const term = debouncedSearch.toLowerCase();
+    return list.filter(
+      (item) =>
+        (item.kode || "").toLowerCase().includes(term) ||
+        (item.nama || "").toLowerCase().includes(term) ||
+        (item.gedungNama || "").toLowerCase().includes(term) ||
+        (item.tipe || "").toLowerCase().includes(term)
+    );
+  }, [list, debouncedSearch]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_LIMIT));
+  const safePage = Math.min(page, totalPages);
+  const paginatedList = useMemo(() => {
+    const start = (safePage - 1) * PAGE_LIMIT;
+    return filteredList.slice(start, start + PAGE_LIMIT);
+  }, [filteredList, safePage]);
 
   const openCreate = () => {
     setForm(EMPTY);
@@ -93,12 +131,24 @@ export default function KelolaRuangan() {
     }
   };
 
+  const filterLabel = (() => {
+    if (tipeFilter === "olahraga") return "Gedung Olahraga";
+    if (tipeFilter === "dormitori") return "Dormitori";
+    if (gedungFilter) {
+      const g = gedungList.find((x) => x.slug === gedungFilter);
+      return g?.nama || gedungFilter;
+    }
+    return null;
+  })();
+
   return (
     <main className="grow">
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
         <div className="sm:flex sm:justify-between sm:items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Kelola Ruangan</h1>
+            <h1 className="text-3xl font-bold text-gray-800">
+              Kelola Ruangan{filterLabel ? ` — ${filterLabel}` : ""}
+            </h1>
             <p className="text-gray-500 mt-1">CRUD data ruangan dan kelas per gedung</p>
           </div>
           <button onClick={openCreate} className="btn bg-violet-600 text-white hover:bg-violet-700">
@@ -107,6 +157,19 @@ export default function KelolaRuangan() {
         </div>
 
         {error && <div className="bg-red-100 text-red-700 p-4 rounded-xl mb-4">{error}</div>}
+
+        <div className="flex justify-end mb-6">
+          <div className="relative w-full sm:w-72">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cari kode, nama, gedung..."
+              className="w-full border border-gray-200 rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            />
+            <span className="absolute left-4 top-3 text-lg">🔍</span>
+          </div>
+        </div>
 
         <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
           <table className="w-full text-sm">
@@ -124,7 +187,9 @@ export default function KelolaRuangan() {
             <tbody>
               {loading ? (
                 <tr><td colSpan={7} className="p-8 text-center text-gray-500">Memuat...</td></tr>
-              ) : list.map((item) => (
+              ) : paginatedList.length === 0 ? (
+                <tr><td colSpan={7} className="p-8 text-center text-gray-500">Tidak ada data ruangan.</td></tr>
+              ) : paginatedList.map((item) => (
                 <tr key={item.id} className="border-t hover:bg-gray-50">
                   <td className="p-4 font-medium">{item.kode}</td>
                   <td className="p-4">{item.nama}</td>
@@ -142,6 +207,15 @@ export default function KelolaRuangan() {
               ))}
             </tbody>
           </table>
+          {!loading && filteredList.length > 0 && (
+            <TablePagination
+              page={safePage}
+              totalPages={totalPages}
+              total={filteredList.length}
+              onPageChange={setPage}
+              itemLabel="ruangan"
+            />
+          )}
         </div>
 
         {showModal && (

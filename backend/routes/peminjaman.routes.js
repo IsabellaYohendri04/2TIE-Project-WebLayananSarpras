@@ -366,6 +366,128 @@ function attachPeminjamanRoutes(app) {
       res.status(500).json({ success: false, message: error.message });
     }
   });
+
+  const laporanTables = {
+    barang: { table: "peminjaman_barang", itemCol: "barang" },
+    ruangan: { table: "peminjaman_ruangan", itemCol: "ruangan" },
+    laboratorium: { table: "peminjaman_laboratorium", itemCol: "laboratorium" },
+  };
+
+  function formatLaporanRow(row, tipe, itemCol) {
+    let laporan = null;
+    if (row.laporan_kondisi_json) {
+      try {
+        laporan = JSON.parse(row.laporan_kondisi_json);
+      } catch {
+        laporan = null;
+      }
+    }
+    return {
+      id: row.id,
+      tipe,
+      item: row[itemCol],
+      kategori: row.kategori,
+      nama: row.nama,
+      nim: row.nim,
+      prodi: row.prodi,
+      tanggalPinjam: formatDate(row.tanggal_pinjam),
+      tanggalKembali: formatDate(row.tanggal_kembali),
+      status: row.status,
+      laporanSelesai: Boolean(row.laporan_selesai),
+      laporan,
+      createdAt: row.created_at,
+    };
+  }
+
+  // --- Laporan Kondisi (peminjam: pending / submit) ---
+  app.get("/api/peminjaman/laporan-kondisi", authenticate, submitRoles, async (req, res) => {
+    try {
+      const pool = getPool();
+      const today = new Date().toISOString().slice(0, 10);
+      const userId = req.user?.id;
+      const userNim = req.user?.nim;
+      const results = [];
+
+      for (const [tipe, { table, itemCol }] of Object.entries(laporanTables)) {
+        let query = `
+          SELECT * FROM ${table}
+          WHERE status = 'Disetujui'
+          AND tanggal_kembali IS NOT NULL
+          AND tanggal_kembali < ?
+          AND (laporan_selesai IS NULL OR laporan_selesai = 0)
+        `;
+        const params = [today];
+
+        if (userNim) {
+          query += " AND nim = ?";
+          params.push(userNim);
+        } else if (userId) {
+          query += " AND user_id = ?";
+          params.push(userId);
+        }
+
+        const [rows] = await pool.query(query, params);
+        results.push(...rows.map((r) => formatLaporanRow(r, tipe, itemCol)));
+      }
+
+      results.sort((a, b) => new Date(b.tanggalKembali) - new Date(a.tanggalKembali));
+      res.json(results);
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  app.post("/api/peminjaman/laporan-kondisi", authenticate, submitRoles, async (req, res) => {
+    try {
+      const { peminjamanId, tipe, kondisi, kelengkapan, catatan } = req.body;
+      if (!peminjamanId || !tipe) {
+        return res.status(400).json({ success: false, message: "ID peminjaman dan tipe wajib diisi" });
+      }
+
+      const config = laporanTables[tipe];
+      if (!config) {
+        return res.status(400).json({ success: false, message: "Tipe peminjaman tidak valid" });
+      }
+
+      const pool = getPool();
+      const [rows] = await pool.query(
+        `SELECT * FROM ${config.table} WHERE id = ?`,
+        [peminjamanId]
+      );
+
+      if (!rows.length) {
+        return res.status(404).json({ success: false, message: "Data peminjaman tidak ditemukan" });
+      }
+
+      const row = rows[0];
+      const userNim = req.user?.nim;
+      const userId = req.user?.id;
+
+      if (userNim && row.nim !== userNim) {
+        return res.status(403).json({ success: false, message: "Anda tidak memiliki akses ke data ini" });
+      }
+      if (!userNim && userId && row.user_id !== userId) {
+        return res.status(403).json({ success: false, message: "Anda tidak memiliki akses ke data ini" });
+      }
+
+      const laporanJson = JSON.stringify({
+        kondisi: kondisi || "Baik",
+        kelengkapan: kelengkapan || "",
+        catatan: catatan || "",
+        tanggalLaporan: new Date().toISOString(),
+        pelapor: req.user?.nama || row.nama,
+      });
+
+      await pool.query(
+        `UPDATE ${config.table} SET laporan_selesai = 1, laporan_kondisi_json = ? WHERE id = ?`,
+        [laporanJson, peminjamanId]
+      );
+
+      res.json({ success: true, message: "Laporan kondisi berhasil dikirim" });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
 }
 
 module.exports = { attachPeminjamanRoutes };

@@ -106,18 +106,15 @@ function attachSarprasRoutes(app) {
     try {
       const pool = getPool();
       const [rows] = await pool.query(`
-        SELECT *
-        FROM sarpras
-        WHERE tipe = 'barang'
-        AND status = 'Tersedia'
+        SELECT id, nama, kategori, stok, status
+        FROM barang
+        WHERE status IN ('tersedia', 'terbatas') AND stok > 0
         ORDER BY nama ASC
       `);
 
-      const data = rows.map(formatSarprasRow);
-
       res.json({
         success: true,
-        data,
+        data: rows,
       });
     } catch (error) {
       res.status(500).json({

@@ -15,6 +15,7 @@ import KelolaBarang from "./pages/pegawai/KelolaBarang";
 import KelolaPegawai from "./pages/pegawai/KelolaPegawai";
 import KelolaRuangan from "./pages/pegawai/KelolaRuangan";
 import KelolaLaboratorium from "./pages/pegawai/KelolaLaboratorium";
+import KelolaLaporanKondisi from "./pages/pegawai/KelolaLaporanKondisi";
 import PeminjamanBarang from "./pages/pegawai/PeminjamanBarang";
 import PeminjamanRuangan from "./pages/pegawai/PeminjamanRuangan";
 import PeminjamanLaboratorium from "./pages/pegawai/PeminjamanLaboratorium";
@@ -91,6 +92,7 @@ function App() {
               <Route path="/peminjaman/barang" element={<PeminjamanBarang />} />
               <Route path="/peminjaman/ruangan" element={<PeminjamanRuangan />} />
               <Route path="/peminjaman/laboratorium" element={<PeminjamanLaboratorium />} />
+              <Route path="/laporan-kondisi" element={<KelolaLaporanKondisi />} />
 
               <Route path="/pegawai/peminjaman/barang/:id" element={<DetailPeminjaman />} />
             </Route>

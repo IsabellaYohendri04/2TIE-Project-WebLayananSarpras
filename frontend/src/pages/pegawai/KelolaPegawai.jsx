@@ -7,13 +7,13 @@ import {
   updatePegawai,
   deletePegawai,
 } from "./services/pegawaiService";
+import TablePagination, { PAGE_LIMIT } from "../../components/TablePagination";
 
 const EMPTY_FORM = {
   nip: "",
   nama: "",
   email: "",
   password: "",
-  jabatan: "",
   divisi: "Sarana Prasarana",
   no_hp: "",
   status: "aktif",
@@ -21,9 +21,12 @@ const EMPTY_FORM = {
 
 function KelolaPegawai() {
   const [pegawaiList, setPegawaiList] = useState([]);
+  const [stats, setStats] = useState({ total: 0, aktif: 0, nonaktif: 0 });
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -40,8 +43,12 @@ function KelolaPegawai() {
       const response = await getPegawai({
         search: debouncedSearch,
         status: statusFilter,
+        page,
+        limit: PAGE_LIMIT,
       });
       setPegawaiList(response.data);
+      setStats(response.stats || { total: 0, aktif: 0, nonaktif: 0 });
+      setPagination(response.pagination || { page: 1, totalPages: 1, total: 0 });
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -50,7 +57,7 @@ function KelolaPegawai() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, statusFilter]);
+  }, [debouncedSearch, statusFilter, page]);
 
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedSearch(search), 500);
@@ -58,14 +65,16 @@ function KelolaPegawai() {
   }, [search]);
 
   useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter]);
+
+  useEffect(() => {
     fetchPegawai();
   }, [fetchPegawai]);
 
-  const totalPegawai = pegawaiList.length;
-  const totalAktif = pegawaiList.filter((p) => p.status === "aktif").length;
-  const totalNonaktif = pegawaiList.filter(
-    (p) => p.status === "nonaktif"
-  ).length;
+  const totalPegawai = stats.total;
+  const totalAktif = stats.aktif;
+  const totalNonaktif = stats.nonaktif;
 
   const openCreateModal = () => {
     setFormData(EMPTY_FORM);
@@ -79,7 +88,6 @@ function KelolaPegawai() {
       nama: pegawai.nama,
       email: pegawai.email,
       password: "",
-      jabatan: pegawai.jabatan,
       divisi: pegawai.divisi,
       no_hp: pegawai.no_hp || "",
       status: pegawai.status,
@@ -237,9 +245,6 @@ function KelolaPegawai() {
                     Nama
                   </th>
                   <th className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                    Jabatan
-                  </th>
-                  <th className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
                     Divisi
                   </th>
                   <th className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
@@ -276,9 +281,6 @@ function KelolaPegawai() {
                           </p>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                      {pegawai.jabatan}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
                       {pegawai.divisi}
@@ -318,6 +320,15 @@ function KelolaPegawai() {
               </tbody>
             </table>
           </div>
+        )}
+        {!loading && pegawaiList.length > 0 && (
+          <TablePagination
+            page={page}
+            totalPages={pagination.totalPages}
+            total={pagination.total}
+            onPageChange={setPage}
+            itemLabel="pegawai"
+          />
         )}
       </div>
 
@@ -398,34 +409,18 @@ function KelolaPegawai() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Jabatan *
-                  </label>
-                  <input
-                    type="text"
-                    name="jabatan"
-                    value={formData.jabatan}
-                    onChange={handleFormChange}
-                    required
-                    className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                    placeholder="Staff Sarpras"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Divisi
-                  </label>
-                  <input
-                    type="text"
-                    name="divisi"
-                    value={formData.divisi}
-                    onChange={handleFormChange}
-                    className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                    placeholder="Sarana Prasarana"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Divisi
+                </label>
+                <input
+                  type="text"
+                  name="divisi"
+                  value={formData.divisi}
+                  onChange={handleFormChange}
+                  className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  placeholder="Sarana Prasarana"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">

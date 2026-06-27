@@ -18,6 +18,13 @@ function gedungLink(base, g) {
   return `${base}/peminjaman-ruangan?gedung=${g.slug}`;
 }
 
+function gedungLinkPegawai(g) {
+  if (g.pathType === "olahraga") return `/peminjaman/ruangan?tipe=olahraga`;
+  if (g.pathType === "dormitori") return `/peminjaman/ruangan?tipe=dormitori`;
+  if (g.pathType === "lab") return `/peminjaman/laboratorium?gedung=${g.slug}`;
+  return `/peminjaman/ruangan?gedung=${g.slug}`;
+}
+
 function PeminjamanMenu({ base, pathname, setSidebarExpanded, dashboardLabel, hideDashboard }) {
   const ruanganActive =
     pathname.includes("peminjaman-ruangan") ||
@@ -144,6 +151,73 @@ function DashboardIcon({ active }) {
   );
 }
 
+function PegawaiPeminjamanMenu({ pathname, setSidebarExpanded }) {
+  const ruanganActive =
+    pathname.includes("/peminjaman/ruangan") ||
+    pathname.includes("/peminjaman/laboratorium");
+
+  return (
+    <>
+      <SidebarLinkGroup activecondition={pathname.includes("/peminjaman/barang")}>
+        {() => (
+          <NavLink to="/peminjaman/barang" className={({ isActive }) => navLinkClass(isActive)}>
+            <div className="flex items-center">
+              <span className="text-lg mr-3">📦</span>
+              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                Peminjaman Barang
+              </span>
+            </div>
+          </NavLink>
+        )}
+      </SidebarLinkGroup>
+
+      <SidebarLinkGroup activecondition={ruanganActive}>
+        {(handleClick, open) => (
+          <>
+            <a
+              href="#0"
+              className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${ruanganActive ? "" : "hover:text-gray-900 dark:hover:text-white"}`}
+              onClick={(e) => {
+                e.preventDefault();
+                handleClick();
+                setSidebarExpanded?.(true);
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="text-lg mr-3">🏢</span>
+                  <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                    Peminjaman Ruangan
+                  </span>
+                </div>
+                <svg className={`w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 ${open && "rotate-180"}`} viewBox="0 0 12 12">
+                  <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
+                </svg>
+              </div>
+            </a>
+            <div className="lg:hidden lg:sidebar-expanded:block 2xl:block">
+              <ul className={`pl-8 mt-1 ${!open && "hidden"}`}>
+                {GEDUNG_DROPDOWN.map((g) => (
+                  <li key={g.slug} className="mb-1">
+                    <NavLink to={gedungLinkPegawai(g)} className={({ isActive }) => subLinkClass(isActive)}>
+                      {g.label}
+                    </NavLink>
+                  </li>
+                ))}
+                <li className="mb-1">
+                  <NavLink to="/peminjaman/laboratorium" className={({ isActive }) => subLinkClass(isActive)}>
+                    Laboratorium
+                  </NavLink>
+                </li>
+              </ul>
+            </div>
+          </>
+        )}
+      </SidebarLinkGroup>
+    </>
+  );
+}
+
 function PegawaiNav({ pathname, setSidebarExpanded }) {
   return (
     <div>
@@ -221,49 +295,15 @@ function PegawaiNav({ pathname, setSidebarExpanded }) {
             </>
           )}
         </SidebarLinkGroup>
+      </ul>
 
-        <SidebarLinkGroup activecondition={pathname.includes("/peminjaman/")}>
-          {(handleClick, open) => (
-            <>
-              <a
-                href="#0"
-                className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${
-                  pathname.includes("/peminjaman/") ? "" : "hover:text-gray-900 dark:hover:text-white"
-                }`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleClick();
-                  setSidebarExpanded?.(true);
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className="text-lg mr-3">📋</span>
-                    <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                      Kelola Peminjaman
-                    </span>
-                  </div>
-                  <svg className={`w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 ${open && "rotate-180"}`} viewBox="0 0 12 12">
-                    <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
-                  </svg>
-                </div>
-              </a>
-              <div className="lg:hidden lg:sidebar-expanded:block 2xl:block">
-                <ul className={`pl-8 mt-1 ${!open && "hidden"}`}>
-                  <li className="mb-1">
-                    <NavLink to="/peminjaman/barang" className={({ isActive }) => subLinkClass(isActive)}>Barang</NavLink>
-                  </li>
-                  <li className="mb-1">
-                    <NavLink to="/peminjaman/ruangan" className={({ isActive }) => subLinkClass(isActive)}>Ruangan</NavLink>
-                  </li>
-                  <li className="mb-1">
-                    <NavLink to="/peminjaman/laboratorium" className={({ isActive }) => subLinkClass(isActive)}>Laboratorium</NavLink>
-                  </li>
-                </ul>
-              </div>
-            </>
-          )}
-        </SidebarLinkGroup>
+      <h3 className="text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3 mt-6">
+        <span className="lg:hidden lg:sidebar-expanded:block 2xl:block">
+          Kelola Peminjaman
+        </span>
+      </h3>
+      <ul className="mt-3">
+        <PegawaiPeminjamanMenu pathname={pathname} setSidebarExpanded={setSidebarExpanded} />
       </ul>
     </div>
   );

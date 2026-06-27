@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { getBarangMaster } from "../../services/fasilitasService";
+import { getBarangTersedia } from "../../services/fasilitasService";
 import { createPeminjamanBarang } from "../../services/peminjamanService";
 import { usePeminjamanBase } from "../../hooks/usePeminjamanBase";
 import {
@@ -38,7 +38,7 @@ function FormPeminjamanBarang() {
   });
 
   useEffect(() => {
-    getBarangMaster().then(setBarangList).catch(console.error);
+    getBarangTersedia().then(setBarangList).catch(console.error);
   }, []);
 
   useEffect(() => {

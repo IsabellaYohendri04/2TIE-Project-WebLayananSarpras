@@ -12,7 +12,6 @@ CREATE TABLE IF NOT EXISTS users (
   nama VARCHAR(100) NOT NULL,
   nip VARCHAR(20) NULL,
   nim VARCHAR(20) NULL,
-  jabatan VARCHAR(50) NULL,
   divisi VARCHAR(50) NULL DEFAULT 'Sarana Prasarana',
   prodi VARCHAR(50) NULL,
   no_hp VARCHAR(15) NULL,

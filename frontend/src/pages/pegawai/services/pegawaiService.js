@@ -14,3 +14,15 @@ export const updatePegawai = (id, data) =>
 
 export const deletePegawai = (id) =>
   api.delete(`/pegawai/${id}`).then((res) => res.data);
+
+export const getPegawaiDashboard = () =>
+  api.get("/pegawai/dashboard").then((res) => res.data);
+
+export const getPegawaiNotifications = () =>
+  api.get("/pegawai/notifications").then((res) => res.data);
+
+export const getLaporanKondisiAdmin = (params = {}) =>
+  api.get("/pegawai/laporan-kondisi", { params }).then((res) => res.data);
+
+export const deleteLaporanKondisiAdmin = (tipe, id) =>
+  api.delete(`/pegawai/laporan-kondisi/${tipe}/${id}`).then((res) => res.data);

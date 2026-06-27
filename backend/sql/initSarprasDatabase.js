@@ -54,10 +54,17 @@ async function initSarprasDatabase() {
       nim VARCHAR(20) NULL,
       prodi VARCHAR(50) NULL,
       no_hp VARCHAR(15) NULL,
+      divisi VARCHAR(100) NULL,
       status ENUM('aktif', 'nonaktif') NOT NULL DEFAULT 'aktif',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  try {
+    await db.query(`ALTER TABLE users DROP COLUMN jabatan`);
+  } catch {
+    // kolom jabatan mungkin sudah tidak ada
+  }
 
   // ================= SARPRAS MASTER =================
   await db.query(`
@@ -190,6 +197,7 @@ async function initSarprasDatabase() {
     "organisasi VARCHAR(100) NULL",
     "detail_json TEXT NULL",
     "laporan_selesai TINYINT(1) DEFAULT 0",
+    "laporan_kondisi_json TEXT NULL",
   ];
 
   for (const table of [
@@ -203,6 +211,10 @@ async function initSarprasDatabase() {
       } catch {}
     }
   }
+
+  try {
+    await db.query("ALTER TABLE users ADD COLUMN divisi VARCHAR(100) NULL");
+  } catch {}
 
   // ================= SEED USERS =================
   const demoUsers = [
@@ -294,6 +306,27 @@ async function initSarprasDatabase() {
     await seedLab("gedung-serba-guna", 3, ["Lab Multimedia", "Lab Desain", "Lab Prototyping", "Lab IoT"]);
     await seedLab("workshop-listrik", 2, ["Lab Elektronika", "Lab PLC", "Lab Instrumentasi"]);
     await seedLab("workshop-mesin", 2, ["Lab CNC", "Lab Las", "Lab Metrologi"]);
+  }
+
+  // ================= SEED BARANG =================
+  const [barangMasterCount] = await db.query("SELECT COUNT(*) as total FROM barang");
+  if (barangMasterCount[0].total === 0) {
+    const barangSeed = [
+      ["Proyektor Epson EB-X06", "Elektronik", 8, "tersedia"],
+      ["Speaker Portable JBL", "Audio", 5, "tersedia"],
+      ["Kamera Canon EOS", "Multimedia", 3, "terbatas"],
+      ["Laptop Lenovo ThinkPad", "Elektronik", 10, "tersedia"],
+      ["Tripod Kamera", "Multimedia", 6, "tersedia"],
+      ["Microphone Wireless", "Audio", 4, "terbatas"],
+      ["Meja Lipat", "Perabot", 15, "tersedia"],
+      ["Kursi Plastik", "Perabot", 50, "tersedia"],
+    ];
+    for (const b of barangSeed) {
+      await db.query(
+        "INSERT INTO barang (nama, kategori, stok, status) VALUES (?, ?, ?, ?)",
+        b
+      );
+    }
   }
 
   // ================= SEED PEMINJAMAN =================

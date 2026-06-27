@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   PageShell,
   PageHeader,
@@ -7,10 +7,12 @@ import {
   DataTable,
   inputClass,
 } from "./components/PeminjamLayout";
+import TablePagination, { PAGE_LIMIT } from "../../components/TablePagination";
 import { getRiwayatPeminjaman } from "../../services/peminjamanService";
 
 function RiwayatPeminjaman() {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [dataRiwayat, setDataRiwayat] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,10 +23,26 @@ function RiwayatPeminjaman() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filteredData = dataRiwayat.filter((item) =>
-    (item.item || "").toLowerCase().includes(search.toLowerCase()) ||
-    (item.nama || "").toLowerCase().includes(search.toLowerCase())
+  const filteredData = useMemo(
+    () =>
+      dataRiwayat.filter(
+        (item) =>
+          (item.item || "").toLowerCase().includes(search.toLowerCase()) ||
+          (item.nama || "").toLowerCase().includes(search.toLowerCase())
+      ),
+    [dataRiwayat, search]
   );
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / PAGE_LIMIT));
+  const safePage = Math.min(page, totalPages);
+  const paginatedData = useMemo(() => {
+    const start = (safePage - 1) * PAGE_LIMIT;
+    return filteredData.slice(start, start + PAGE_LIMIT);
+  }, [filteredData, safePage]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -91,11 +109,22 @@ function RiwayatPeminjaman() {
         {loading ? (
           <p className="text-center text-gray-500 py-8">Memuat riwayat...</p>
         ) : (
-          <DataTable
-            columns={columns}
-            data={filteredData}
-            emptyMessage="Tidak ada riwayat peminjaman ditemukan."
-          />
+          <>
+            <DataTable
+              columns={columns}
+              data={paginatedData}
+              emptyMessage="Tidak ada riwayat peminjaman ditemukan."
+            />
+            {filteredData.length > 0 && (
+              <TablePagination
+                page={safePage}
+                totalPages={totalPages}
+                total={filteredData.length}
+                onPageChange={setPage}
+                itemLabel="riwayat"
+              />
+            )}
+          </>
         )}
       </ContentCard>
     </PageShell>
