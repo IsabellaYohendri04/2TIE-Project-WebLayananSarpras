@@ -39,7 +39,7 @@ function PeminjamanChart({ labels, peminjaman, pengembalian }) {
         labels,
         datasets: [
           {
-            label: "Peminjaman",
+            label: "Pengajuan",
             data: peminjaman,
             borderColor: "#6366f1",
             backgroundColor: "rgba(99, 102, 241, 0.1)",
@@ -47,7 +47,7 @@ function PeminjamanChart({ labels, peminjaman, pengembalian }) {
             tension: 0.3,
           },
           {
-            label: "Pengembalian",
+            label: "Pengembalian (laporan selesai)",
             data: pengembalian,
             borderColor: "#22c55e",
             backgroundColor: "rgba(34, 197, 94, 0.1)",
@@ -87,6 +87,9 @@ function Dashboard() {
     menunggu: 0,
     selesai: 0,
     terlambat: 0,
+    totalFasilitas: 0,
+    totalPegawai: 0,
+    totalPeminjaman: 0,
   });
   const [chart, setChart] = useState({ labels: [], peminjaman: [], pengembalian: [] });
   const [peminjamanTerbaru, setPeminjamanTerbaru] = useState([]);
@@ -145,8 +148,8 @@ function Dashboard() {
     },
     {
       icon: <Building2 size={34} />,
-      title: "Kelola Fasilitas",
-      desc: "Kelola data fasilitas sarpras yang tersedia",
+      title: "Kelola Sarana Prasarana",
+      desc: "Kelola barang, gedung, ruangan, dan laboratorium",
       color: "from-green-500 to-emerald-600",
       to: "/fasilitas/barang",
     },
@@ -162,7 +165,7 @@ function Dashboard() {
       title: "Laporan Kondisi",
       desc: "Pantau laporan kondisi fasilitas",
       color: "from-sky-500 to-cyan-600",
-      to: "/peminjaman/barang",
+      to: "/laporan-kondisi",
     },
   ];
 
@@ -199,6 +202,18 @@ function Dashboard() {
           <p className="text-indigo-100 text-lg md:text-xl mt-2">
             Dashboard Pegawai Sarana dan Prasarana — Politeknik Caltex Riau
           </p>
+
+          <div className="flex flex-wrap gap-4 mt-6 text-indigo-100 text-sm">
+            <span className="bg-white/10 rounded-full px-4 py-1.5">
+              {stats.totalFasilitas} fasilitas terdaftar
+            </span>
+            <span className="bg-white/10 rounded-full px-4 py-1.5">
+              {stats.totalPegawai} pegawai aktif
+            </span>
+            <span className="bg-white/10 rounded-full px-4 py-1.5">
+              {stats.totalPeminjaman} total peminjaman
+            </span>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mt-10">
             {statCards.map((item) => (
@@ -239,7 +254,7 @@ function Dashboard() {
         {/* CHART */}
         <div className="col-span-12 xl:col-span-7 bg-white rounded-3xl shadow-sm p-6">
           <h3 className="font-semibold text-2xl text-gray-800 mb-6">
-            📊 Ringkasan Peminjaman (7 Hari Terakhir)
+            📊 Ringkasan Pengajuan Peminjaman (7 Hari Terakhir)
           </h3>
 
           {chart.labels.length > 0 ? (
@@ -259,22 +274,24 @@ function Dashboard() {
         <div className="col-span-12 xl:col-span-5 space-y-6">
           <div className="bg-white rounded-3xl shadow-sm p-6">
             <h3 className="font-semibold text-xl text-gray-800 flex items-center gap-2 mb-4">
-              🔔 Notifikasi
+              🔔 Notifikasi Peminjaman
             </h3>
-            <div className="space-y-4">
+            <p className="text-xs text-gray-400 mb-4">10 pengajuan terbaru dari database</p>
+            <div className="space-y-3 max-h-[420px] overflow-y-auto">
               {notifications.length === 0 ? (
-                <p className="text-sm text-gray-500">Tidak ada notifikasi baru</p>
+                <p className="text-sm text-gray-500">Belum ada data peminjaman</p>
               ) : (
-                notifications.slice(0, 4).map((n) => (
+                notifications.map((n) => (
                   <Link
                     key={n.id}
                     to={n.link}
                     className="flex gap-3 items-start hover:bg-gray-50 p-2 rounded-xl transition"
                   >
                     <div className={`w-2.5 h-2.5 ${n.color} rounded-full mt-2 shrink-0`} />
-                    <div>
-                      <h4 className="font-semibold text-gray-800 text-sm">{n.title}</h4>
+                    <div className="min-w-0">
+                      <h4 className="font-semibold text-gray-800 text-sm truncate">{n.title}</h4>
                       <p className="text-xs text-gray-500">{n.sub}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{n.tanggal}</p>
                     </div>
                   </Link>
                 ))

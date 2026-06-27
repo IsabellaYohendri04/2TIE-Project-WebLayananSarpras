@@ -31,6 +31,32 @@ function statusBadge(status) {
   return "bg-yellow-100 text-yellow-700";
 }
 
+function notificationColor(status) {
+  if (status === "Disetujui") return "bg-green-500";
+  if (status === "Ditolak") return "bg-red-500";
+  return "bg-yellow-500";
+}
+
+function peminjamanLink(tipe) {
+  if (tipe === "barang") return "/peminjaman/barang";
+  if (tipe === "ruangan") return "/peminjaman/ruangan";
+  return "/peminjaman/laboratorium";
+}
+
+function mapPeminjamanNotification(row) {
+  const tipeLabel =
+    row.tipe === "barang" ? "Barang" : row.tipe === "ruangan" ? "Ruangan" : "Laboratorium";
+  return {
+    id: `${row.tipe}-${row.id}`,
+    color: notificationColor(row.status),
+    title: `${row.item} — ${row.nama}`,
+    sub: `${tipeLabel} · ${row.status}`,
+    message: `${tipeLabel} · ${row.status}`,
+    tanggal: formatDisplayDate(row.created_at),
+    link: peminjamanLink(row.tipe),
+  };
+}
+
 function sanitizePegawai(user) {
   return {
     id: user.id,
@@ -60,13 +86,16 @@ function attachPegawaiRoutes(app) {
         const today = new Date().toISOString().slice(0, 10);
 
         const unionQuery = `
-          SELECT id, nama, barang AS item, status, tanggal_pinjam, tanggal_kembali, created_at, 'barang' AS tipe
+          SELECT id, nama, barang AS item, status, tanggal_pinjam, tanggal_kembali, created_at,
+                 COALESCE(laporan_selesai, 0) AS laporan_selesai, 'barang' AS tipe
           FROM peminjaman_barang
           UNION ALL
-          SELECT id, nama, ruangan AS item, status, tanggal_pinjam, tanggal_kembali, created_at, 'ruangan'
+          SELECT id, nama, ruangan AS item, status, tanggal_pinjam, tanggal_kembali, created_at,
+                 COALESCE(laporan_selesai, 0) AS laporan_selesai, 'ruangan' AS tipe
           FROM peminjaman_ruangan
           UNION ALL
-          SELECT id, nama, laboratorium AS item, status, tanggal_pinjam, tanggal_kembali, created_at, 'laboratorium'
+          SELECT id, nama, laboratorium AS item, status, tanggal_pinjam, tanggal_kembali, created_at,
+                 COALESCE(laporan_selesai, 0) AS laporan_selesai, 'laboratorium' AS tipe
           FROM peminjaman_laboratorium
         `;
 
@@ -74,10 +103,11 @@ function attachPegawaiRoutes(app) {
           SELECT
             SUM(CASE WHEN status = 'Disetujui' AND (tanggal_kembali IS NULL OR tanggal_kembali >= ?) THEN 1 ELSE 0 END) AS aktif,
             SUM(CASE WHEN status = 'Menunggu' THEN 1 ELSE 0 END) AS menunggu,
-            SUM(CASE WHEN status = 'Disetujui' AND tanggal_kembali IS NOT NULL AND tanggal_kembali < ? THEN 1 ELSE 0 END) AS selesai,
-            SUM(CASE WHEN status = 'Disetujui' AND tanggal_kembali IS NOT NULL AND tanggal_kembali < ? THEN 1 ELSE 0 END) AS terlambat
+            SUM(CASE WHEN laporan_selesai = 1 OR status = 'Ditolak' THEN 1 ELSE 0 END) AS selesai,
+            SUM(CASE WHEN status = 'Disetujui' AND tanggal_kembali IS NOT NULL AND tanggal_kembali < ?
+              AND COALESCE(laporan_selesai, 0) = 0 THEN 1 ELSE 0 END) AS terlambat
           FROM (${unionQuery}) AS p
-        `, [today, today, today]);
+        `, [today, today]);
 
         const chartLabels = [];
         const chartPeminjaman = [];
@@ -92,19 +122,19 @@ function attachPegawaiRoutes(app) {
           );
 
           const [[pinjamRow]] = await pool.query(
-            `SELECT COUNT(*) AS total FROM (${unionQuery}) AS p WHERE DATE(tanggal_pinjam) = ?`,
+            `SELECT COUNT(*) AS total FROM (${unionQuery}) AS p WHERE DATE(created_at) = ?`,
             [dateStr]
           );
           const [[kembaliRow]] = await pool.query(
-            `SELECT COUNT(*) AS total FROM (${unionQuery}) AS p WHERE DATE(tanggal_kembali) = ?`,
+            `SELECT COUNT(*) AS total FROM (${unionQuery}) AS p WHERE laporan_selesai = 1 AND DATE(tanggal_kembali) = ?`,
             [dateStr]
           );
-          chartPeminjaman.push(pinjamRow.total);
-          chartPengembalian.push(kembaliRow.total);
+          chartPeminjaman.push(Number(pinjamRow.total) || 0);
+          chartPengembalian.push(Number(kembaliRow.total) || 0);
         }
 
         const [recentRows] = await pool.query(
-          `SELECT * FROM (${unionQuery}) AS p ORDER BY created_at DESC LIMIT 5`
+          `SELECT * FROM (${unionQuery}) AS p ORDER BY created_at DESC LIMIT 10`
         );
 
         const recentPeminjaman = recentRows.map((row) => ({
@@ -118,50 +148,26 @@ function attachPegawaiRoutes(app) {
           badge: statusBadge(row.status),
         }));
 
-        const [pendingRows] = await pool.query(
-          `SELECT * FROM (${unionQuery}) AS p WHERE status = 'Menunggu' ORDER BY created_at DESC LIMIT 5`
+        const [notifRows] = await pool.query(
+          `SELECT * FROM (${unionQuery}) AS p ORDER BY created_at DESC LIMIT 10`
         );
 
-        const [dueRows] = await pool.query(
-          `SELECT * FROM (${unionQuery}) AS p
-           WHERE status = 'Disetujui' AND tanggal_kembali IS NOT NULL
-           AND tanggal_kembali BETWEEN ? AND DATE_ADD(?, INTERVAL 3 DAY)
-           ORDER BY tanggal_kembali ASC LIMIT 5`,
-          [today, today]
-        );
-
-        const notifications = [
-          ...pendingRows.map((row) => ({
-            id: `pending-${row.tipe}-${row.id}`,
-            color: "bg-yellow-500",
-            title: `Pengajuan ${row.item} — ${row.nama}`,
-            sub: "Menunggu persetujuan Anda",
-            tanggal: formatDisplayDate(row.created_at),
-            link: row.tipe === "barang"
-              ? "/peminjaman/barang"
-              : row.tipe === "ruangan"
-                ? "/peminjaman/ruangan"
-                : "/peminjaman/laboratorium",
-          })),
-          ...dueRows.map((row) => ({
-            id: `due-${row.tipe}-${row.id}`,
-            color: "bg-blue-500",
-            title: `Pengembalian ${row.item}`,
-            sub: `${row.nama} · jatuh tempo ${formatDisplayDate(row.tanggal_kembali)}`,
-            tanggal: formatDisplayDate(row.tanggal_kembali),
-            link: row.tipe === "barang"
-              ? "/peminjaman/barang"
-              : row.tipe === "ruangan"
-                ? "/peminjaman/ruangan"
-                : "/peminjaman/laboratorium",
-          })),
-        ].slice(0, 8);
+        const notifications = notifRows.map(mapPeminjamanNotification);
 
         const [[fasilitasRow]] = await pool.query(`
           SELECT
             (SELECT COUNT(*) FROM barang) +
-            (SELECT COUNT(*) FROM sarpras WHERE tipe IN ('ruangan', 'laboratorium')) AS total
+            (SELECT COUNT(*) FROM ruangan) +
+            (SELECT COUNT(*) FROM laboratorium) AS total
         `);
+
+        const [[pegawaiRow]] = await pool.query(
+          "SELECT COUNT(*) AS total FROM users WHERE role = 'pegawai_sarpras' AND status = 'aktif'"
+        );
+
+        const [[totalPeminjamanRow]] = await pool.query(
+          `SELECT COUNT(*) AS total FROM (${unionQuery}) AS p`
+        );
 
         res.json({
           success: true,
@@ -172,6 +178,8 @@ function attachPegawaiRoutes(app) {
               selesai: Number(statsRow.selesai) || 0,
               terlambat: Number(statsRow.terlambat) || 0,
               totalFasilitas: Number(fasilitasRow.total) || 0,
+              totalPegawai: Number(pegawaiRow.total) || 0,
+              totalPeminjaman: Number(totalPeminjamanRow.total) || 0,
             },
             chart: {
               labels: chartLabels,
@@ -195,7 +203,6 @@ function attachPegawaiRoutes(app) {
     async (_req, res) => {
       try {
         const pool = getPool();
-        const today = new Date().toISOString().slice(0, 10);
         const unionQuery = `
           SELECT id, nama, barang AS item, status, tanggal_kembali, created_at, 'barang' AS tipe
           FROM peminjaman_barang
@@ -207,42 +214,11 @@ function attachPegawaiRoutes(app) {
           FROM peminjaman_laboratorium
         `;
 
-        const [pendingRows] = await pool.query(
-          `SELECT * FROM (${unionQuery}) AS p WHERE status = 'Menunggu' ORDER BY created_at DESC LIMIT 6`
+        const [rows] = await pool.query(
+          `SELECT * FROM (${unionQuery}) AS p ORDER BY created_at DESC LIMIT 10`
         );
 
-        const [dueRows] = await pool.query(
-          `SELECT * FROM (${unionQuery}) AS p
-           WHERE status = 'Disetujui' AND tanggal_kembali IS NOT NULL
-           AND tanggal_kembali BETWEEN ? AND DATE_ADD(?, INTERVAL 3 DAY)
-           ORDER BY tanggal_kembali ASC LIMIT 4`,
-          [today, today]
-        );
-
-        const notifications = [
-          ...pendingRows.map((row) => ({
-            id: `pending-${row.tipe}-${row.id}`,
-            title: `Pengajuan ${row.item} — ${row.nama}`,
-            message: "Menunggu persetujuan Anda",
-            tanggal: formatDisplayDate(row.created_at),
-            link: row.tipe === "barang"
-              ? "/peminjaman/barang"
-              : row.tipe === "ruangan"
-                ? "/peminjaman/ruangan"
-                : "/peminjaman/laboratorium",
-          })),
-          ...dueRows.map((row) => ({
-            id: `due-${row.tipe}-${row.id}`,
-            title: `Pengembalian ${row.item}`,
-            message: `${row.nama} · jatuh tempo ${formatDisplayDate(row.tanggal_kembali)}`,
-            tanggal: formatDisplayDate(row.tanggal_kembali),
-            link: row.tipe === "barang"
-              ? "/peminjaman/barang"
-              : row.tipe === "ruangan"
-                ? "/peminjaman/ruangan"
-                : "/peminjaman/laboratorium",
-          })),
-        ];
+        const notifications = rows.map(mapPeminjamanNotification);
 
         res.json({ success: true, data: notifications });
       } catch (error) {

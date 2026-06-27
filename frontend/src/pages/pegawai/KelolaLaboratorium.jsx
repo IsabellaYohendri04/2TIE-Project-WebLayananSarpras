@@ -1,5 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import TablePagination, { PAGE_LIMIT, getRowNumber } from "../../components/TablePagination";
+import TableFilterBar from "../../components/TableFilterBar";
+import { useDebouncedValue } from "../../hooks/usePaginatedFilter";
 import {
   getGedung,
   getLaboratorium,
@@ -18,7 +22,17 @@ const EMPTY = {
   status: "tersedia",
 };
 
+const STATUS_OPTIONS = [
+  { value: "all", label: "Semua Status" },
+  { value: "tersedia", label: "Tersedia" },
+  { value: "terbatas", label: "Terbatas" },
+  { value: "penuh", label: "Penuh" },
+];
+
 export default function KelolaLaboratorium() {
+  const [searchParams] = useSearchParams();
+  const gedungFilter = searchParams.get("gedung") || "";
+
   const [gedungList, setGedungList] = useState([]);
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,11 +40,17 @@ export default function KelolaLaboratorium() {
   const [form, setForm] = useState(EMPTY);
   const [editId, setEditId] = useState(null);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const debouncedSearch = useDebouncedValue(search);
+  const [page, setPage] = useState(1);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [gedung, lab] = await Promise.all([getGedung(), getLaboratorium()]);
+      const params = {};
+      if (gedungFilter) params.gedung = gedungFilter;
+      const [gedung, lab] = await Promise.all([getGedung(), getLaboratorium(params)]);
       setGedungList(gedung);
       setList(lab);
     } catch (err) {
@@ -38,9 +58,41 @@ export default function KelolaLaboratorium() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [gedungFilter]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter, gedungFilter]);
+
+  const filteredList = useMemo(() => {
+    let result = list;
+    if (statusFilter !== "all") {
+      result = result.filter((item) => item.status === statusFilter);
+    }
+    if (debouncedSearch.trim()) {
+      const term = debouncedSearch.toLowerCase();
+      result = result.filter(
+        (item) =>
+          (item.kode || "").toLowerCase().includes(term) ||
+          (item.nama || "").toLowerCase().includes(term) ||
+          (item.gedungNama || "").toLowerCase().includes(term)
+      );
+    }
+    return result;
+  }, [list, debouncedSearch, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_LIMIT));
+  const safePage = Math.min(page, totalPages);
+  const paginatedList = useMemo(() => {
+    const start = (safePage - 1) * PAGE_LIMIT;
+    return filteredList.slice(start, start + PAGE_LIMIT);
+  }, [filteredList, safePage]);
+
+  const filterLabel = gedungFilter
+    ? gedungList.find((g) => g.slug === gedungFilter)?.nama || gedungFilter
+    : null;
 
   const openCreate = () => { setForm(EMPTY); setEditId(null); setShowModal(true); };
 
@@ -88,7 +140,9 @@ export default function KelolaLaboratorium() {
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
         <div className="sm:flex sm:justify-between sm:items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Kelola Laboratorium</h1>
+            <h1 className="text-3xl font-bold text-gray-800">
+              Kelola Laboratorium{filterLabel ? ` — ${filterLabel}` : ""}
+            </h1>
             <p className="text-gray-500 mt-1">CRUD data laboratorium per gedung</p>
           </div>
           <button onClick={openCreate} className="btn bg-violet-600 text-white hover:bg-violet-700">+ Tambah Lab</button>
@@ -96,10 +150,20 @@ export default function KelolaLaboratorium() {
 
         {error && <div className="bg-red-100 text-red-700 p-4 rounded-xl mb-4">{error}</div>}
 
+        <TableFilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari kode, nama, gedung..."
+          filterValue={statusFilter}
+          onFilterChange={setStatusFilter}
+          filterOptions={STATUS_OPTIONS}
+        />
+
         <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50">
               <tr>
+                <th className="p-4 text-left w-14">No</th>
                 <th className="p-4 text-left">Kode</th>
                 <th className="p-4 text-left">Nama</th>
                 <th className="p-4 text-left">Gedung</th>
@@ -110,9 +174,12 @@ export default function KelolaLaboratorium() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className="p-8 text-center">Memuat...</td></tr>
-              ) : list.map((item) => (
+                <tr><td colSpan={7} className="p-8 text-center">Memuat...</td></tr>
+              ) : paginatedList.length === 0 ? (
+                <tr><td colSpan={7} className="p-8 text-center text-gray-500">Tidak ada data laboratorium.</td></tr>
+              ) : paginatedList.map((item, index) => (
                 <tr key={item.id} className="border-t hover:bg-gray-50">
+                  <td className="p-4 text-gray-500">{getRowNumber(safePage, index)}</td>
                   <td className="p-4 font-medium">{item.kode}</td>
                   <td className="p-4">{item.nama}</td>
                   <td className="p-4">{item.gedungNama}</td>
@@ -126,6 +193,15 @@ export default function KelolaLaboratorium() {
               ))}
             </tbody>
           </table>
+          {!loading && filteredList.length > 0 && (
+            <TablePagination
+              page={safePage}
+              totalPages={totalPages}
+              total={filteredList.length}
+              onPageChange={setPage}
+              itemLabel="laboratorium"
+            />
+          )}
         </div>
 
         {showModal && (

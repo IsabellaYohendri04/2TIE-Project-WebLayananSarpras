@@ -2,6 +2,10 @@ import React from "react";
 
 export const PAGE_LIMIT = 10;
 
+export function getRowNumber(page, index, limit = PAGE_LIMIT) {
+  return (page - 1) * limit + index + 1;
+}
+
 export default function TablePagination({
   page,
   totalPages,

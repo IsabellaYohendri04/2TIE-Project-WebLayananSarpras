@@ -1,13 +1,22 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { FiTrash2 } from "react-icons/fi";
-import TablePagination, { PAGE_LIMIT } from "../../components/TablePagination";
+import TablePagination, { PAGE_LIMIT, getRowNumber } from "../../components/TablePagination";
+import TableFilterBar from "../../components/TableFilterBar";
 import { useDebouncedValue } from "../../hooks/usePaginatedFilter";
+
+const STATUS_OPTIONS = [
+  { value: "all", label: "Semua Status" },
+  { value: "Menunggu", label: "Menunggu" },
+  { value: "Disetujui", label: "Disetujui" },
+  { value: "Ditolak", label: "Ditolak" },
+];
 
 function PeminjamanAdmin({ title, tipe, fetchFn, updateFn, deleteFn, filterFn }) {
   const [allData, setAllData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const debouncedSearch = useDebouncedValue(search);
   const [page, setPage] = useState(1);
 
@@ -29,20 +38,26 @@ function PeminjamanAdmin({ title, tipe, fetchFn, updateFn, deleteFn, filterFn })
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, filterFn]);
+  }, [debouncedSearch, statusFilter, filterFn]);
 
   const filteredData = useMemo(() => {
-    if (!debouncedSearch.trim()) return allData;
-    const term = debouncedSearch.toLowerCase();
-    return allData.filter(
-      (item) =>
-        (item.nama || "").toLowerCase().includes(term) ||
-        (item.nim || "").toLowerCase().includes(term) ||
-        (item.prodi || "").toLowerCase().includes(term) ||
-        (item[itemField] || item.item || "").toLowerCase().includes(term) ||
-        (item.kategori || "").toLowerCase().includes(term)
-    );
-  }, [allData, debouncedSearch, itemField]);
+    let result = allData;
+    if (statusFilter !== "all") {
+      result = result.filter((item) => item.status === statusFilter);
+    }
+    if (debouncedSearch.trim()) {
+      const term = debouncedSearch.toLowerCase();
+      result = result.filter(
+        (item) =>
+          (item.nama || "").toLowerCase().includes(term) ||
+          (item.nim || "").toLowerCase().includes(term) ||
+          (item.prodi || "").toLowerCase().includes(term) ||
+          (item[itemField] || item.item || "").toLowerCase().includes(term) ||
+          (item.kategori || "").toLowerCase().includes(term)
+      );
+    }
+    return result;
+  }, [allData, debouncedSearch, statusFilter, itemField]);
 
   const totalPages = Math.max(1, Math.ceil(filteredData.length / PAGE_LIMIT));
   const safePage = Math.min(page, totalPages);
@@ -89,23 +104,20 @@ function PeminjamanAdmin({ title, tipe, fetchFn, updateFn, deleteFn, filterFn })
           <div className="bg-white p-5 rounded-2xl shadow"><p className="text-gray-500 text-sm">Disetujui</p><p className="text-2xl font-bold text-green-600">{allData.filter((d) => d.status === "Disetujui").length}</p></div>
         </div>
 
-        <div className="flex justify-end mb-6">
-          <div className="relative w-full sm:w-72">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari peminjam, item..."
-              className="w-full border border-gray-200 rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500"
-            />
-            <span className="absolute left-4 top-3 text-lg">🔍</span>
-          </div>
-        </div>
+        <TableFilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari peminjam, item..."
+          filterValue={statusFilter}
+          onFilterChange={setStatusFilter}
+          filterOptions={STATUS_OPTIONS}
+        />
 
         <div className="bg-white rounded-3xl shadow-lg overflow-x-auto border border-slate-100">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
+                <th className="p-4 text-left font-semibold w-14">No</th>
                 <th className="p-4 text-left font-semibold">Peminjam</th>
                 <th className="p-4 text-left font-semibold">Item</th>
                 <th className="p-4 text-left font-semibold">Periode</th>
@@ -115,11 +127,12 @@ function PeminjamanAdmin({ title, tipe, fetchFn, updateFn, deleteFn, filterFn })
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} className="p-8 text-center">Memuat...</td></tr>
+                <tr><td colSpan={6} className="p-8 text-center">Memuat...</td></tr>
               ) : filteredData.length === 0 ? (
-                <tr><td colSpan={5} className="p-8 text-center text-gray-500">Belum ada pengajuan</td></tr>
-              ) : data.map((item) => (
+                <tr><td colSpan={6} className="p-8 text-center text-gray-500">Belum ada pengajuan</td></tr>
+              ) : data.map((item, index) => (
                 <tr key={item.id} className="border-t hover:bg-gray-50">
+                  <td className="p-4 text-gray-500">{getRowNumber(safePage, index)}</td>
                   <td className="p-4">
                     <p className="font-medium">{item.nama}</p>
                     <p className="text-xs text-gray-500">{item.nim} · {item.prodi}</p>

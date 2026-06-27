@@ -1,5 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import TablePagination, { PAGE_LIMIT, getRowNumber } from "../../components/TablePagination";
+import TableFilterBar from "../../components/TableFilterBar";
+import { useDebouncedValue } from "../../hooks/usePaginatedFilter";
 import {
   getBarangMaster,
   createBarangMaster,
@@ -9,6 +12,13 @@ import {
 
 const EMPTY = { nama: "", kategori: "Umum", stok: 1, status: "tersedia" };
 
+const STATUS_OPTIONS = [
+  { value: "all", label: "Semua Status" },
+  { value: "tersedia", label: "Tersedia" },
+  { value: "terbatas", label: "Terbatas" },
+  { value: "habis", label: "Habis" },
+];
+
 export default function KelolaBarang() {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,6 +26,10 @@ export default function KelolaBarang() {
   const [form, setForm] = useState(EMPTY);
   const [editId, setEditId] = useState(null);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const debouncedSearch = useDebouncedValue(search);
+  const [page, setPage] = useState(1);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -29,6 +43,33 @@ export default function KelolaBarang() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter]);
+
+  const filteredList = useMemo(() => {
+    let result = list;
+    if (statusFilter !== "all") {
+      result = result.filter((item) => item.status === statusFilter);
+    }
+    if (debouncedSearch.trim()) {
+      const term = debouncedSearch.toLowerCase();
+      result = result.filter(
+        (item) =>
+          (item.nama || "").toLowerCase().includes(term) ||
+          (item.kategori || "").toLowerCase().includes(term)
+      );
+    }
+    return result;
+  }, [list, debouncedSearch, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_LIMIT));
+  const safePage = Math.min(page, totalPages);
+  const paginatedList = useMemo(() => {
+    const start = (safePage - 1) * PAGE_LIMIT;
+    return filteredList.slice(start, start + PAGE_LIMIT);
+  }, [filteredList, safePage]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -56,10 +97,20 @@ export default function KelolaBarang() {
 
         {error && <div className="bg-red-100 text-red-700 p-4 rounded-xl mb-4">{error}</div>}
 
+        <TableFilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari nama, kategori..."
+          filterValue={statusFilter}
+          onFilterChange={setStatusFilter}
+          filterOptions={STATUS_OPTIONS}
+        />
+
         <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50">
               <tr>
+                <th className="p-4 text-left w-14">No</th>
                 <th className="p-4 text-left">Nama</th>
                 <th className="p-4 text-left">Kategori</th>
                 <th className="p-4 text-left">Stok</th>
@@ -69,9 +120,12 @@ export default function KelolaBarang() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} className="p-8 text-center">Memuat...</td></tr>
-              ) : list.map((item) => (
+                <tr><td colSpan={6} className="p-8 text-center">Memuat...</td></tr>
+              ) : paginatedList.length === 0 ? (
+                <tr><td colSpan={6} className="p-8 text-center text-gray-500">Tidak ada data barang.</td></tr>
+              ) : paginatedList.map((item, index) => (
                 <tr key={item.id} className="border-t hover:bg-gray-50">
+                  <td className="p-4 text-gray-500">{getRowNumber(safePage, index)}</td>
                   <td className="p-4 font-medium">{item.nama}</td>
                   <td className="p-4">{item.kategori}</td>
                   <td className="p-4">{item.stok}</td>
@@ -84,6 +138,15 @@ export default function KelolaBarang() {
               ))}
             </tbody>
           </table>
+          {!loading && filteredList.length > 0 && (
+            <TablePagination
+              page={safePage}
+              totalPages={totalPages}
+              total={filteredList.length}
+              onPageChange={setPage}
+              itemLabel="barang"
+            />
+          )}
         </div>
 
         {showModal && (

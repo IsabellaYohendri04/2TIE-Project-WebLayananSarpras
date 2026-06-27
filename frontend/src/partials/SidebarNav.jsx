@@ -25,6 +25,20 @@ function gedungLinkPegawai(g) {
   return `/peminjaman/ruangan?gedung=${g.slug}`;
 }
 
+function kelolaRuanganLink(g) {
+  if (g.pathType === "olahraga") return `/fasilitas/ruangan?tipe=olahraga`;
+  if (g.pathType === "dormitori") return `/fasilitas/ruangan?tipe=dormitori`;
+  return `/fasilitas/ruangan?gedung=${g.slug}`;
+}
+
+function isKelolaRuanganActive(pathname, search, g) {
+  const params = new URLSearchParams(search);
+  if (pathname !== "/fasilitas/ruangan") return false;
+  if (g.pathType === "olahraga") return params.get("tipe") === "olahraga";
+  if (g.pathType === "dormitori") return params.get("tipe") === "dormitori";
+  return params.get("gedung") === g.slug;
+}
+
 function PeminjamanMenu({ base, pathname, setSidebarExpanded, dashboardLabel, hideDashboard }) {
   const ruanganActive =
     pathname.includes("peminjaman-ruangan") ||
@@ -218,7 +232,80 @@ function PegawaiPeminjamanMenu({ pathname, setSidebarExpanded }) {
   );
 }
 
-function PegawaiNav({ pathname, setSidebarExpanded }) {
+function KelolaSarprasMenu({ pathname, search, setSidebarExpanded }) {
+  const ruanganActive =
+    pathname.includes("/fasilitas/ruangan") ||
+    pathname.includes("/fasilitas/laboratorium");
+
+  return (
+    <>
+      <SidebarLinkGroup activecondition={pathname === "/fasilitas/barang"}>
+        {() => (
+          <NavLink to="/fasilitas/barang" className={({ isActive }) => navLinkClass(isActive)}>
+            <div className="flex items-center">
+              <span className="text-lg mr-3">📦</span>
+              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                Kelola Barang
+              </span>
+            </div>
+          </NavLink>
+        )}
+      </SidebarLinkGroup>
+
+      <SidebarLinkGroup activecondition={ruanganActive}>
+        {(handleClick, open) => (
+          <>
+            <a
+              href="#0"
+              className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${ruanganActive ? "" : "hover:text-gray-900 dark:hover:text-white"}`}
+              onClick={(e) => {
+                e.preventDefault();
+                handleClick();
+                setSidebarExpanded?.(true);
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="text-lg mr-3">🏢</span>
+                  <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                    Kelola Ruangan
+                  </span>
+                </div>
+                <svg className={`w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 ${open && "rotate-180"}`} viewBox="0 0 12 12">
+                  <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
+                </svg>
+              </div>
+            </a>
+            <div className="lg:hidden lg:sidebar-expanded:block 2xl:block">
+              <ul className={`pl-8 mt-1 ${!open && "hidden"}`}>
+                {GEDUNG_DROPDOWN.map((g) => (
+                  <li key={g.slug} className="mb-1">
+                    <NavLink
+                      to={kelolaRuanganLink(g)}
+                      className={() => subLinkClass(isKelolaRuanganActive(pathname, search, g))}
+                    >
+                      {g.label}
+                    </NavLink>
+                  </li>
+                ))}
+                <li className="mb-1">
+                  <NavLink
+                    to="/fasilitas/laboratorium"
+                    className={({ isActive }) => subLinkClass(isActive)}
+                  >
+                    Laboratorium
+                  </NavLink>
+                </li>
+              </ul>
+            </div>
+          </>
+        )}
+      </SidebarLinkGroup>
+    </>
+  );
+}
+
+function PegawaiNav({ pathname, search, setSidebarExpanded }) {
   return (
     <div>
       <h3 className="text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3">
@@ -252,49 +339,15 @@ function PegawaiNav({ pathname, setSidebarExpanded }) {
             </NavLink>
           )}
         </SidebarLinkGroup>
+      </ul>
 
-        <SidebarLinkGroup activecondition={pathname.includes("fasilitas")}>
-          {(handleClick, open) => (
-            <>
-              <a
-                href="#0"
-                className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${
-                  pathname.includes("fasilitas") ? "" : "hover:text-gray-900 dark:hover:text-white"
-                }`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleClick();
-                  setSidebarExpanded?.(true);
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className="text-lg mr-3">🏗️</span>
-                    <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                      Kelola Fasilitas
-                    </span>
-                  </div>
-                  <svg className={`w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 ${open && "rotate-180"}`} viewBox="0 0 12 12">
-                    <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
-                  </svg>
-                </div>
-              </a>
-              <div className="lg:hidden lg:sidebar-expanded:block 2xl:block">
-                <ul className={`pl-8 mt-1 ${!open && "hidden"}`}>
-                  <li className="mb-1">
-                    <NavLink to="/fasilitas/barang" className={({ isActive }) => subLinkClass(isActive)}>Barang</NavLink>
-                  </li>
-                  <li className="mb-1">
-                    <NavLink to="/fasilitas/ruangan" className={({ isActive }) => subLinkClass(isActive)}>Ruangan</NavLink>
-                  </li>
-                  <li className="mb-1">
-                    <NavLink to="/fasilitas/laboratorium" className={({ isActive }) => subLinkClass(isActive)}>Laboratorium</NavLink>
-                  </li>
-                </ul>
-              </div>
-            </>
-          )}
-        </SidebarLinkGroup>
+      <h3 className="text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3 mt-6">
+        <span className="lg:hidden lg:sidebar-expanded:block 2xl:block">
+          Kelola Sarana Prasarana
+        </span>
+      </h3>
+      <ul className="mt-3">
+        <KelolaSarprasMenu pathname={pathname} search={search} setSidebarExpanded={setSidebarExpanded} />
       </ul>
 
       <h3 className="text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3 mt-6">
@@ -393,7 +446,7 @@ function PeminjamNav({ pathname, setSidebarExpanded }) {
 
 export default function SidebarNav({ setSidebarExpanded }) {
   const { user } = useAuth();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
 
   switch (user?.role) {
     case "janitor":
@@ -402,7 +455,13 @@ export default function SidebarNav({ setSidebarExpanded }) {
       return <PeminjamNav pathname={pathname} setSidebarExpanded={setSidebarExpanded} />;
     case "pegawai_sarpras":
     default:
-      return <PegawaiNav pathname={pathname} setSidebarExpanded={setSidebarExpanded} />;
+      return (
+        <PegawaiNav
+          pathname={pathname}
+          search={search}
+          setSidebarExpanded={setSidebarExpanded}
+        />
+      );
   }
 }
 

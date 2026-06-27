@@ -17,6 +17,7 @@ const PAGE_TITLES = {
   '/peminjaman/barang': 'Peminjaman Barang',
   '/peminjaman/ruangan': 'Peminjaman Ruangan',
   '/peminjaman/laboratorium': 'Peminjaman Laboratorium',
+  '/laporan-kondisi': 'Kelola Laporan Kondisi',
 };
 
 function Header({

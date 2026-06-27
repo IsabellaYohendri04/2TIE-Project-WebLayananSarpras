@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { FiTrash2, FiX, FiEye } from "react-icons/fi";
-import TablePagination, { PAGE_LIMIT } from "../../components/TablePagination";
+import TablePagination, { PAGE_LIMIT, getRowNumber } from "../../components/TablePagination";
 import { useDebouncedValue } from "../../hooks/usePaginatedFilter";
 import {
   getLaporanKondisiAdmin,
@@ -119,6 +119,7 @@ export default function KelolaLaporanKondisi() {
             <table className="w-full text-left">
               <thead className="bg-gray-50 dark:bg-gray-700/50">
                 <tr>
+                  <th className="px-6 py-4 text-sm font-semibold w-14">No</th>
                   <th className="px-6 py-4 text-sm font-semibold">Barang / Sarpras</th>
                   <th className="px-6 py-4 text-sm font-semibold">Tipe</th>
                   <th className="px-6 py-4 text-sm font-semibold">Peminjam</th>
@@ -128,8 +129,9 @@ export default function KelolaLaporanKondisi() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {paginatedList.map((item) => (
+                {paginatedList.map((item, index) => (
                   <tr key={`${item.tipe}-${item.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                    <td className="px-6 py-4 text-sm text-gray-500">{getRowNumber(safePage, index)}</td>
                     <td className="px-6 py-4 font-medium text-gray-800 dark:text-white">{item.item}</td>
                     <td className="px-6 py-4 text-sm capitalize">{TIPE_LABEL[item.tipe] || item.tipe}</td>
                     <td className="px-6 py-4">

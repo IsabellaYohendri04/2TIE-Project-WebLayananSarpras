@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
-import TablePagination, { PAGE_LIMIT } from "../../components/TablePagination";
+import TablePagination, { PAGE_LIMIT, getRowNumber } from "../../components/TablePagination";
+import TableFilterBar from "../../components/TableFilterBar";
 import { useDebouncedValue } from "../../hooks/usePaginatedFilter";
 import {
   getGedung,
@@ -35,6 +36,7 @@ export default function KelolaRuangan() {
   const [editId, setEditId] = useState(null);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const debouncedSearch = useDebouncedValue(search);
   const [page, setPage] = useState(1);
 
@@ -60,19 +62,25 @@ export default function KelolaRuangan() {
 
   useEffect(() => {
     setPage(1);
-  }, [gedungFilter, tipeFilter, debouncedSearch]);
+  }, [gedungFilter, tipeFilter, debouncedSearch, statusFilter]);
 
   const filteredList = useMemo(() => {
-    if (!debouncedSearch.trim()) return list;
-    const term = debouncedSearch.toLowerCase();
-    return list.filter(
-      (item) =>
-        (item.kode || "").toLowerCase().includes(term) ||
-        (item.nama || "").toLowerCase().includes(term) ||
-        (item.gedungNama || "").toLowerCase().includes(term) ||
-        (item.tipe || "").toLowerCase().includes(term)
-    );
-  }, [list, debouncedSearch]);
+    let result = list;
+    if (statusFilter !== "all") {
+      result = result.filter((item) => item.status === statusFilter);
+    }
+    if (debouncedSearch.trim()) {
+      const term = debouncedSearch.toLowerCase();
+      result = result.filter(
+        (item) =>
+          (item.kode || "").toLowerCase().includes(term) ||
+          (item.nama || "").toLowerCase().includes(term) ||
+          (item.gedungNama || "").toLowerCase().includes(term) ||
+          (item.tipe || "").toLowerCase().includes(term)
+      );
+    }
+    return result;
+  }, [list, debouncedSearch, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_LIMIT));
   const safePage = Math.min(page, totalPages);
@@ -158,23 +166,25 @@ export default function KelolaRuangan() {
 
         {error && <div className="bg-red-100 text-red-700 p-4 rounded-xl mb-4">{error}</div>}
 
-        <div className="flex justify-end mb-6">
-          <div className="relative w-full sm:w-72">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari kode, nama, gedung..."
-              className="w-full border border-gray-200 rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500"
-            />
-            <span className="absolute left-4 top-3 text-lg">🔍</span>
-          </div>
-        </div>
+        <TableFilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari kode, nama, gedung..."
+          filterValue={statusFilter}
+          onFilterChange={setStatusFilter}
+          filterOptions={[
+            { value: "all", label: "Semua Status" },
+            { value: "tersedia", label: "Tersedia" },
+            { value: "terbatas", label: "Terbatas" },
+            { value: "penuh", label: "Penuh" },
+          ]}
+        />
 
         <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50">
               <tr>
+                <th className="p-4 text-left w-14">No</th>
                 <th className="p-4 text-left">Kode</th>
                 <th className="p-4 text-left">Nama</th>
                 <th className="p-4 text-left">Gedung</th>
@@ -186,11 +196,12 @@ export default function KelolaRuangan() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className="p-8 text-center text-gray-500">Memuat...</td></tr>
+                <tr><td colSpan={8} className="p-8 text-center text-gray-500">Memuat...</td></tr>
               ) : paginatedList.length === 0 ? (
-                <tr><td colSpan={7} className="p-8 text-center text-gray-500">Tidak ada data ruangan.</td></tr>
-              ) : paginatedList.map((item) => (
+                <tr><td colSpan={8} className="p-8 text-center text-gray-500">Tidak ada data ruangan.</td></tr>
+              ) : paginatedList.map((item, index) => (
                 <tr key={item.id} className="border-t hover:bg-gray-50">
+                  <td className="p-4 text-gray-500">{getRowNumber(safePage, index)}</td>
                   <td className="p-4 font-medium">{item.kode}</td>
                   <td className="p-4">{item.nama}</td>
                   <td className="p-4">{item.gedungNama}</td>

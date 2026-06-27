@@ -90,9 +90,9 @@ function DropdownNotifications({ align }) {
           onBlur={() => setDropdownOpen(false)}
         >
           <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase pt-1.5 pb-2 px-4">
-            Notifikasi
+            Peminjaman Terbaru (10)
           </div>
-          <ul>
+          <ul className="max-h-96 overflow-y-auto">
             {user?.role === "pegawai_sarpras" ? (
               loading ? (
                 <li className="px-4 py-3 text-sm text-gray-500">Memuat...</li>

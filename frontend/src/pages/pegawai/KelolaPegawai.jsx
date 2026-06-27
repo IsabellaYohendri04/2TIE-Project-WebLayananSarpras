@@ -7,7 +7,7 @@ import {
   updatePegawai,
   deletePegawai,
 } from "./services/pegawaiService";
-import TablePagination, { PAGE_LIMIT } from "../../components/TablePagination";
+import TablePagination, { PAGE_LIMIT, getRowNumber } from "../../components/TablePagination";
 
 const EMPTY_FORM = {
   nip: "",
@@ -238,6 +238,9 @@ function KelolaPegawai() {
             <table className="w-full text-left">
               <thead className="bg-gray-50 dark:bg-gray-700/50">
                 <tr>
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300 w-14">
+                    No
+                  </th>
                   <th className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
                     NIP
                   </th>
@@ -259,11 +262,14 @@ function KelolaPegawai() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {pegawaiList.map((pegawai) => (
+                {pegawaiList.map((pegawai, index) => (
                   <tr
                     key={pegawai.id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
                   >
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {getRowNumber(page, index)}
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200 font-mono">
                       {pegawai.nip}
                     </td>
