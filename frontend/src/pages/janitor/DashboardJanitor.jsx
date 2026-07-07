@@ -49,14 +49,15 @@ export default function DashboardJanitor() {
     <main className="grow bg-slate-50">
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">
-            Dashboard Janitor 🧹
-          </h1>
-          <p className="text-gray-500 mt-2">
-            Monitoring sarana prasarana, peminjaman, dan kondisi barang
-          </p>
-        </div>
+        <div className="mb-8 rounded-[28px] overflow-hidden bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 text-white p-8 shadow-xl">
+        <h1 className="text-4xl font-bold">
+          Halo, Janitor 🧹
+        </h1>
+
+        <p className="text-indigo-100 mt-2 text-lg">
+          Monitoring sarana prasarana, peminjaman, dan kondisi barang
+        </p>
+      </div>
 
         {error && (
           <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-xl mb-6">
@@ -70,21 +71,21 @@ export default function DashboardJanitor() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="bg-white rounded-3xl shadow-lg p-6">
-                <p className="text-gray-500">Total Sarpras</p>
-                <h2 className="text-4xl font-bold text-blue-600 mt-2">
+                <p className="text-slate-500 font-medium">Total Sarpras</p>
+                <h2 className="text-4xl font-bold text-indigo-600 mt-2">
                   {stats.totalSarpras}
                 </h2>
               </div>
 
-              <div className="bg-white rounded-3xl shadow-lg p-6">
-                <p className="text-gray-500">Peminjaman Aktif</p>
-                <h2 className="text-4xl font-bold text-orange-500 mt-2">
+              <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 p-6">
+                <p className="text-slate-500 font-medium">Peminjaman Aktif</p>
+                <h2 className="text-4xl font-bold text-indigo-500 mt-2">
                   {stats.totalPeminjamanAktif}
                 </h2>
               </div>
 
               <div className="bg-white rounded-3xl shadow-lg p-6">
-                <p className="text-gray-500">Laporan Kondisi</p>
+                <p className="text-gray-500">Laporan Kerusakan</p>
                 <h2 className="text-4xl font-bold text-red-500 mt-2">
                   {stats.totalLaporan}
                 </h2>
