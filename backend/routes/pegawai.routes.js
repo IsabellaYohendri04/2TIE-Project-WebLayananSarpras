@@ -71,6 +71,7 @@ function sanitizePegawai(user) {
     no_hp: user.no_hp,
     status: user.status,
     created_at: user.created_at,
+    updated_at: user.updated_at,
   };
 }
 
@@ -275,7 +276,7 @@ function attachPegawaiRoutes(app) {
         );
 
         const [rows] = await pool.query(
-          `SELECT id, nip, nama, email, divisi, no_hp, status, created_at ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+          `SELECT id, nip, nama, email, divisi, no_hp, status, created_at, updated_at ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
           [...params, limitNum, offset],
         );
 
@@ -308,7 +309,7 @@ function attachPegawaiRoutes(app) {
       try {
         const pool = getPool();
         const [rows] = await pool.query(
-          "SELECT id, nip, nama, email, divisi, no_hp, status, created_at FROM users WHERE id = ? AND role = 'pegawai_sarpras'",
+          "SELECT id, nip, nama, email, divisi, no_hp, status, created_at, updated_at FROM users WHERE id = ? AND role = 'pegawai_sarpras'",
           [req.params.id],
         );
 
@@ -357,7 +358,7 @@ function attachPegawaiRoutes(app) {
         );
 
         const [rows] = await pool.query(
-          "SELECT id, nip, nama, email, divisi, no_hp, status, created_at FROM users WHERE id = ?",
+          "SELECT id, nip, nama, email, divisi, no_hp, status, created_at, updated_at FROM users WHERE id = ?",
           [result.insertId],
         );
 
@@ -429,7 +430,7 @@ function attachPegawaiRoutes(app) {
         }
 
         const [rows] = await pool.query(
-          "SELECT id, nip, nama, email, divisi, no_hp, status, created_at FROM users WHERE id = ?",
+          "SELECT id, nip, nama, email, divisi, no_hp, status, created_at, updated_at FROM users WHERE id = ?",
           [req.params.id],
         );
 
@@ -510,35 +511,6 @@ function attachPegawaiRoutes(app) {
     };
   }
 
-  a// =============================================
-  // LAPORAN KONDISI — harus SEBELUM /api/pegawai/:id
-  // =============================================
-
-  const laporanTables = {
-    barang: { table: "peminjaman_barang", itemCol: "barang" },
-    ruangan: { table: "peminjaman_ruangan", itemCol: "ruangan" },
-    laboratorium: { table: "peminjaman_laboratorium", itemCol: "laboratorium" },
-  };
-
-  function parseLaporanRow(row, tipe, itemCol) {
-    let laporan = null;
-    if (row.laporan_kondisi_json) {
-      try { laporan = JSON.parse(row.laporan_kondisi_json); } catch { laporan = null; }
-    }
-    return {
-      id: row.id, tipe,
-      item: row[itemCol],
-      kategori: row.kategori,
-      nama: row.nama, nim: row.nim, prodi: row.prodi,
-      tanggalPinjam: formatDate(row.tanggal_pinjam),
-      tanggalKembali: formatDate(row.tanggal_kembali),
-      status: row.status,
-      laporanSelesai: Boolean(row.laporan_selesai),
-      laporan,
-      createdAt: row.created_at,
-    };
-  }
-
   app.get(
     "/api/pegawai/laporan-kondisi",
     authenticate,
@@ -557,18 +529,25 @@ function attachPegawaiRoutes(app) {
         for (const [typeKey, { table, itemCol }] of typesToQuery) {
           let query = `SELECT * FROM ${table} WHERE laporan_selesai = 1`;
           const params = [];
+
           if (search) {
             query += ` AND (${itemCol} LIKE ? OR nama LIKE ? OR nim LIKE ?)`;
             const term = `%${search}%`;
             params.push(term, term, term);
           }
+
           const [rows] = await pool.query(query, params);
-          results.push(...rows.map((r) => parseLaporanRow(r, typeKey, itemCol)));
+          results.push(
+            ...rows.map((r) => parseLaporanRow(r, typeKey, itemCol)),
+          );
         }
 
         let filtered = results;
-        if (status === "pending") filtered = results.filter((r) => !r.laporan);
-        else if (status === "submitted") filtered = results.filter((r) => r.laporan);
+        if (status === "pending") {
+          filtered = results.filter((r) => !r.laporan);
+        } else if (status === "submitted") {
+          filtered = results.filter((r) => r.laporan);
+        }
 
         filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         res.json({ success: true, data: filtered });
@@ -585,21 +564,11 @@ function attachPegawaiRoutes(app) {
     async (req, res) => {
       try {
         const config = laporanTables[req.params.tipe];
-        if (!config) return res.status(400).json({ success: false, message: "Tipe tidak valid" });
-
-        const pool = getPool();
-        await pool.query(
-          `UPDATE ${config.table} SET laporan_selesai = 0, laporan_kondisi_json = NULL WHERE id = ?`,
-          [req.params.id],
-        );
-        res.json({ success: true, message: "Laporan kondisi berhasil dihapus" });
-      } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-      }
-    },
-  );
-
-  // =============================================
+        if (!config) {
+          return res
+            .status(400)
+            .json({ success: false, message: "Tipe tidak valid" });
+        }
 
         const pool = getPool();
         await pool.query(

@@ -20,8 +20,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { useAuth } from "../context/AuthContext";
-import { getPegawaiDashboard } from "./pegawai/services/pegawaiService";
+import { useAuth } from "../../context/AuthContext";
+import { getPegawaiDashboard } from "./services/pegawaiService";
 
 Chart.register(
   LineController,
@@ -330,57 +330,7 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl shadow-sm p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-semibold text-2xl text-gray-800 flex items-center gap-2">
-                <Clock3 size={22} />
-                Peminjaman Terbaru
-              </h3>
-              <Link
-                to="/peminjaman/barang"
-                className="text-indigo-600 font-medium text-sm"
-              >
-                Lihat Semua
-              </Link>
-            </div>
-
-            <div className="space-y-5">
-              {peminjamanTerbaru.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">
-                  Belum ada pengajuan peminjaman
-                </p>
-              ) : (
-                peminjamanTerbaru.map((item) => (
-                  <div
-                    key={`${item.tipe}-${item.id}`}
-                    className="flex items-center justify-between border-b pb-4"
-                  >
-                    <div className="flex gap-4">
-                      <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center">
-                        {getItemIcon(item.tipe)}
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-800">
-                          {item.nama}
-                        </h4>
-                        <p className="text-sm text-gray-500">
-                          Diajukan oleh: {item.peminjam}
-                        </p>
-                        <p className="text-sm text-gray-400">
-                          {item.tanggal} • {item.jam}
-                        </p>
-                      </div>
-                    </div>
-                    <span
-                      className={`px-3 py-1.5 rounded-xl text-xs font-medium ${item.badge}`}
-                    >
-                      {item.status}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>

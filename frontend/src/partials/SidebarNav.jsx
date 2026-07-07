@@ -415,31 +415,6 @@ function PegawaiNav({ pathname, search, setSidebarExpanded }) {
 
       <h3 className="text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3 mt-6">
         <span className="lg:hidden lg:sidebar-expanded:block 2xl:block">
-          Kelola Laporan Kondisi
-        </span>
-      </h3>
-      <ul className="mt-3">
-        <SidebarLinkGroup
-          activecondition={pathname.includes("/laporan-kondisi")}
-        >
-          {() => (
-            <NavLink
-              to="/laporan-kondisi"
-              className={({ isActive }) => navLinkClass(isActive)}
-            >
-              <div className="flex items-center">
-                <span className="text-lg mr-3">📝</span>
-                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                  Laporan Kondisi
-                </span>
-              </div>
-            </NavLink>
-          )}
-        </SidebarLinkGroup>
-      </ul>
-
-      <h3 className="text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3 mt-6">
-        <span className="lg:hidden lg:sidebar-expanded:block 2xl:block">
           Kelola Sarana Prasarana
         </span>
       </h3>
@@ -461,6 +436,31 @@ function PegawaiNav({ pathname, search, setSidebarExpanded }) {
           pathname={pathname}
           setSidebarExpanded={setSidebarExpanded}
         />
+      </ul>
+
+      <h3 className="text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3 mt-6">
+        <span className="lg:hidden lg:sidebar-expanded:block 2xl:block">
+          Kelola Laporan Kondisi
+        </span>
+      </h3>
+      <ul className="mt-3">
+        <SidebarLinkGroup
+          activecondition={pathname.includes("/laporan-kondisi")}
+        >
+          {() => (
+            <NavLink
+              to="/laporan-kondisi"
+              className={({ isActive }) => navLinkClass(isActive)}
+            >
+              <div className="flex items-center">
+                <span className="text-lg mr-3">📝</span>
+                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                  Laporan Kondisi
+                </span>
+              </div>
+            </NavLink>
+          )}
+        </SidebarLinkGroup>
       </ul>
     </div>
   );

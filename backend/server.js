@@ -6,7 +6,7 @@ const cors = require("cors");
 
 const { initSarprasDatabase } = require("./sql/initSarprasDatabase");
 const { testConnection } = require("./config/db");
-
+const { attachPeminjamRoutes } = require("./routes/peminjam.routes");
 const { attachAuthRoutes } = require("./routes/auth.routes");
 const { attachPegawaiRoutes } = require("./routes/pegawai.routes");
 const { attachFasilitasRoutes } = require("./routes/fasilitas.routes");
@@ -36,7 +36,7 @@ attachPeminjamanRoutes(app);
 attachSarprasRoutes(app);
 attachLaporanRoutes(app);
 attachJanitorRoutes(app);
-
+attachPeminjamRoutes(app);
 const PORT = process.env.PORT || 3001;
 
 async function start() {

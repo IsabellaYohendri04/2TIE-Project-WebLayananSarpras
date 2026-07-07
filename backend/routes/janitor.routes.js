@@ -33,7 +33,7 @@ function attachJanitorRoutes(app) {
         `);
 
         const [[laporanStats]] = await pool.query(`
-          SELECT COUNT(*) AS total FROM laporan_kerusakan
+          SELECT COUNT(*) AS total FROM laporan_kondisi
           WHERE status IN ('MENUNGGU', 'DIPROSES')
         `);
 

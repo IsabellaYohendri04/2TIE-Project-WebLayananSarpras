@@ -28,7 +28,7 @@ function attachLaporanRoutes(app) {
   app.get("/api/laporan", authenticate, janitorOrPegawai, async (req, res) => {
     try {
       const { status } = req.query;
-      let query = "SELECT * FROM laporan_kerusakan WHERE 1=1";
+      let query = "SELECT * FROM laporan_kondisi WHERE 1=1";
       const params = [];
 
       if (status && status !== "ALL") {
@@ -72,7 +72,7 @@ function attachLaporanRoutes(app) {
 
         const pool = getPool();
         const [existing] = await pool.query(
-          "SELECT id FROM laporan_kerusakan WHERE id = ?",
+          "SELECT id FROM laporan_kondisi WHERE id = ?",
           [req.params.id],
         );
 
@@ -82,13 +82,13 @@ function attachLaporanRoutes(app) {
             .json({ success: false, message: "Laporan tidak ditemukan" });
         }
 
-        await pool.query(
-          "UPDATE laporan_kerusakan SET status = ? WHERE id = ?",
-          [status, req.params.id],
-        );
+        await pool.query("UPDATE laporan_kondisi SET status = ? WHERE id = ?", [
+          status,
+          req.params.id,
+        ]);
 
         const [rows] = await pool.query(
-          "SELECT * FROM laporan_kerusakan WHERE id = ?",
+          "SELECT * FROM laporan_kondisi WHERE id = ?",
           [req.params.id],
         );
 

@@ -37,7 +37,7 @@ export default function DashboardJanitor() {
       .catch((err) => {
         setError(
           err.response?.data?.message ||
-            "Gagal memuat dashboard. Pastikan server berjalan."
+            "Gagal memuat dashboard. Pastikan server berjalan.",
         );
       })
       .finally(() => setLoading(false));
@@ -48,16 +48,13 @@ export default function DashboardJanitor() {
   return (
     <main className="grow bg-slate-50">
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-
         <div className="mb-8 rounded-[28px] overflow-hidden bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 text-white p-8 shadow-xl">
-        <h1 className="text-4xl font-bold">
-          Halo, Janitor 🧹
-        </h1>
+          <h1 className="text-4xl font-bold">Halo, Janitor 🧹</h1>
 
-        <p className="text-indigo-100 mt-2 text-lg">
-          Monitoring sarana prasarana, peminjaman, dan kondisi barang
-        </p>
-      </div>
+          <p className="text-indigo-100 mt-2 text-lg">
+            Monitoring sarana prasarana, peminjaman, dan kondisi barang
+          </p>
+        </div>
 
         {error && (
           <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-xl mb-6">
@@ -85,7 +82,7 @@ export default function DashboardJanitor() {
               </div>
 
               <div className="bg-white rounded-3xl shadow-lg p-6">
-                <p className="text-gray-500">Laporan Kerusakan</p>
+                <p className="text-gray-500">Laporan Kondisi</p>
                 <h2 className="text-4xl font-bold text-red-500 mt-2">
                   {stats.totalLaporan}
                 </h2>
@@ -126,7 +123,7 @@ export default function DashboardJanitor() {
               >
                 <div className="text-4xl mb-2">🔧</div>
                 <h3 className="font-bold">Laporan</h3>
-                <p className="text-sm opacity-80">Kerusakan barang</p>
+                <p className="text-sm opacity-80">Kondisi barang</p>
               </button>
             </div>
 
@@ -186,7 +183,11 @@ export default function DashboardJanitor() {
               ) : (
                 selectedItems.map((item, index) => (
                   <div key={index} className="bg-gray-100 p-3 rounded-xl">
-                    {item.tipe === "ruangan" ? "🏢" : item.tipe === "laboratorium" ? "🔬" : "💻"}{" "}
+                    {item.tipe === "ruangan"
+                      ? "🏢"
+                      : item.tipe === "laboratorium"
+                        ? "🔬"
+                        : "💻"}{" "}
                     {item.item} - {item.peminjam}
                   </div>
                 ))

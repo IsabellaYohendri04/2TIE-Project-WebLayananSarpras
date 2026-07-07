@@ -59,7 +59,7 @@ function parseBodyFields(body) {
 async function clearSarprasReferences(pool, id) {
   try {
     await pool.query(
-      "UPDATE laporan_kerusakan SET sarpras_id = NULL WHERE sarpras_id = ?",
+      "UPDATE laporan_kondisi SET sarpras_id = NULL WHERE sarpras_id = ?",
       [id],
     );
   } catch {

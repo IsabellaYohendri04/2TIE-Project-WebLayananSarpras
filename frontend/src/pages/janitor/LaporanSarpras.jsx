@@ -121,7 +121,7 @@ export default function LaporanSarpras() {
               >
                 <img
                   src={item.image}
-                  alt="bukti kerusakan"
+                  alt="bukti kondisi"
                   className="h-48 w-full object-cover"
                 />
 

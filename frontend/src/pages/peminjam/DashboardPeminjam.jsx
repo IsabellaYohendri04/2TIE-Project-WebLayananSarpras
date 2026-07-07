@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import Banner from "../../partials/Banner";
-import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 
 import FullCalendar from "@fullcalendar/react";
@@ -8,33 +7,57 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 
 import { PageShell, ContentCard } from "./components/PeminjamLayout";
+import { getPeminjamDashboard } from "./services/peminjamService";
 
 function DashboardPeminjam() {
-  const [holidayEvents, setHolidayEvents] = useState([]);
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
 
-  useEffect(() => {
-    axios
-      .get("https://api-harilibur.vercel.app/api")
-      .then((res) => {
-        const events = res.data.map((item) => ({
-          title: item.keterangan,
-          date: item.holiday_date,
-          color: "#dc2626",
-        }));
-        setHolidayEvents(events);
-      })
-      .catch(() => {});
-  }, []);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const events = [
-    { title: "💻 Laptop Tersedia", date: "2026-06-12", color: "#22c55e" },
-    { title: "🏢 Ruang Seminar Tersedia", date: "2026-06-15", color: "#22c55e" },
-    { title: "🧪 Lab Komputer Penuh", date: "2026-06-18", color: "#ef4444" },
-    ...holidayEvents,
-  ];
+  const [namaUser, setNamaUser] = useState("Peminjam");
+  const [stats, setStats] = useState({
+    totalPengajuan: 0,
+    menunggu: 0,
+    disetujui: 0,
+    ditolak: 0,
+  });
+  const [events, setEvents] = useState([]);
+  const [notifikasi, setNotifikasi] = useState([]);
+  const [ketersediaan, setKetersediaan] = useState([]);
+  const [peminjamanAktif, setPeminjamanAktif] = useState([]);
+  const [jadwalPengembalian, setJadwalPengembalian] = useState([]);
+
+  useEffect(() => {
+    setLoading(true);
+    setError("");
+
+    getPeminjamDashboard()
+      .then((res) => {
+        const d = res.data;
+        setNamaUser(d.namaUser || "Peminjam");
+        setStats({
+          totalPengajuan: d.totalPengajuan ?? 0,
+          menunggu: d.menunggu ?? 0,
+          disetujui: d.disetujui ?? 0,
+          ditolak: d.ditolak ?? 0,
+        });
+        setEvents(d.events || []);
+        setNotifikasi(d.notifikasi || []);
+        setKetersediaan(d.ketersediaan || []);
+        setPeminjamanAktif(d.peminjamanAktif || []);
+        setJadwalPengembalian(d.jadwalPengembalian || []);
+      })
+      .catch((err) => {
+        setError(
+          err.response?.data?.message ||
+            "Gagal memuat dashboard. Pastikan server berjalan.",
+        );
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const quickLinks = [
     {
@@ -72,6 +95,75 @@ function DashboardPeminjam() {
     setShowModal(true);
   };
 
+  // Helper: color for notifikasi dot
+  const notifColor = (tipe) => {
+    if (tipe === "disetujui") return "bg-green-500";
+    if (tipe === "diproses") return "bg-yellow-500";
+    if (tipe === "pengembalian") return "bg-blue-500";
+    if (tipe === "ditolak") return "bg-red-500";
+    return "bg-gray-400";
+  };
+
+  // Helper: progress bar width & color for status aktif
+  const progressInfo = (status) => {
+    if (status === "Disetujui" || status === "Sedang Dipinjam")
+      return {
+        width: "70%",
+        color: "bg-green-500",
+        borderColor: "border-green-500",
+        label: "Sedang Dipinjam",
+        labelColor: "text-green-600",
+      };
+    if (status === "Menunggu")
+      return {
+        width: "35%",
+        color: "bg-yellow-500",
+        borderColor: "border-yellow-500",
+        label: "Menunggu Persetujuan",
+        labelColor: "text-yellow-600",
+      };
+    if (status === "Ditolak")
+      return {
+        width: "100%",
+        color: "bg-red-500",
+        borderColor: "border-red-500",
+        label: "Ditolak",
+        labelColor: "text-red-600",
+      };
+    return {
+      width: "50%",
+      color: "bg-gray-400",
+      borderColor: "border-gray-400",
+      label: status,
+      labelColor: "text-gray-600",
+    };
+  };
+
+  // Helper: icon for ketersediaan
+  const sarprasIcon = (nama) => {
+    const n = (nama || "").toLowerCase();
+    if (n.includes("laptop")) return "💻";
+    if (n.includes("proyektor") || n.includes("projector")) return "📽️";
+    if (n.includes("kamera") || n.includes("camera")) return "📷";
+    if (n.includes("ruang")) return "🏢";
+    if (n.includes("lab")) return "🔬";
+    return "📦";
+  };
+
+  // Helper: color for ketersediaan value
+  const ketersediaanColor = (stok) => {
+    if (stok === 0 || stok === "Penuh") return "text-red-600";
+    if (typeof stok === "number" && stok <= 2) return "text-yellow-600";
+    return "text-green-600";
+  };
+
+  const ketersediaanLabel = (stok) => {
+    if (stok === 0) return "Penuh";
+    if (stok === "Penuh") return "Penuh";
+    if (typeof stok === "number") return `${stok} Unit`;
+    return stok;
+  };
+
   return (
     <>
       <PageShell>
@@ -81,31 +173,45 @@ function DashboardPeminjam() {
             🏫
           </div>
           <div className="relative z-10">
-            <h1 className="text-4xl font-bold text-white">Halo, Nailah 👋</h1>
+            <h1 className="text-4xl font-bold text-white">
+              Halo, {namaUser} 👋
+            </h1>
             <p className="text-violet-100 mt-2 text-lg">
               Sistem Layanan Sarana dan Prasarana — Politeknik Caltex Riau
             </p>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-              {[
-                { label: "Total Pengajuan", value: "25" },
-                { label: "Menunggu", value: "3" },
-                { label: "Disetujui", value: "18" },
-                { label: "Ditolak", value: "4" },
-              ].map((stat) => (
-                <div
-                  key={stat.label}
-                  className="bg-white/20 backdrop-blur rounded-3xl p-5"
-                >
-                  <p className="text-violet-100 text-sm">{stat.label}</p>
-                  <h2 className="text-3xl md:text-4xl font-bold text-white mt-1">
-                    {stat.value}
-                  </h2>
-                </div>
-              ))}
-            </div>
+            {loading ? (
+              <div className="mt-8 text-violet-100 text-center py-4">
+                Memuat data...
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+                {[
+                  { label: "Total Pengajuan", value: stats.totalPengajuan },
+                  { label: "Menunggu", value: stats.menunggu },
+                  { label: "Disetujui", value: stats.disetujui },
+                  { label: "Ditolak", value: stats.ditolak },
+                ].map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="bg-white/20 backdrop-blur rounded-3xl p-5"
+                  >
+                    <p className="text-violet-100 text-sm">{stat.label}</p>
+                    <h2 className="text-3xl md:text-4xl font-bold text-white mt-1">
+                      {stat.value}
+                    </h2>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
+
+        {error && (
+          <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-xl mb-6">
+            {error}
+          </div>
+        )}
 
         {/* QUICK LINKS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
@@ -122,126 +228,169 @@ function DashboardPeminjam() {
           ))}
         </div>
 
-        <div className="grid grid-cols-12 gap-6 mb-8">
-          {/* KALENDER */}
-          <ContentCard className="col-span-12 xl:col-span-9">
-            <div className="flex flex-wrap justify-between items-center gap-4 mb-5">
-              <h2 className="text-2xl font-bold text-gray-800">
-                📅 Kalender Ketersediaan Sarpras
-              </h2>
-              <div className="flex gap-4">
-                <span className="flex items-center gap-2 text-sm text-gray-600">
-                  <div className="w-3 h-3 bg-green-500 rounded-full" />
-                  Tersedia
-                </span>
-                <span className="flex items-center gap-2 text-sm text-gray-600">
-                  <div className="w-3 h-3 bg-red-500 rounded-full" />
-                  Penuh
-                </span>
-              </div>
-            </div>
-            <FullCalendar
-              plugins={[dayGridPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
-              locale="id"
-              height="650px"
-              events={events}
-              dateClick={handleDateClick}
-            />
-          </ContentCard>
-
-          {/* SIDEBAR */}
-          <div className="col-span-12 xl:col-span-3 flex flex-col gap-6">
-            <ContentCard>
-              <h2 className="font-bold text-xl mb-5 text-gray-800">
-                🔔 Notifikasi
-              </h2>
-              <div className="space-y-4">
-                {[
-                  { color: "bg-green-500", title: "Laptop Asus Disetujui", sub: "2 jam yang lalu" },
-                  { color: "bg-yellow-500", title: "Ruang Seminar Diproses", sub: "1 hari yang lalu" },
-                  { color: "bg-blue-500", title: "Pengembalian Besok", sub: "Proyektor Epson" },
-                ].map((n) => (
-                  <div key={n.title} className="flex gap-3 items-start">
-                    <div className={`w-2.5 h-2.5 ${n.color} rounded-full mt-2 shrink-0`} />
-                    <div>
-                      <h4 className="font-semibold text-gray-800">{n.title}</h4>
-                      <p className="text-sm text-gray-500">{n.sub}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ContentCard>
-
-            <ContentCard>
-              <h2 className="font-bold text-xl mb-5 text-gray-800">
-                📦 Ketersediaan Hari Ini
-              </h2>
-              <div className="space-y-3">
-                {[
-                  { icon: "💻", name: "Laptop", val: "5 Unit", cls: "text-green-600" },
-                  { icon: "📽️", name: "Proyektor", val: "3 Unit", cls: "text-green-600" },
-                  { icon: "📷", name: "Kamera", val: "2 Unit", cls: "text-yellow-600" },
-                  { icon: "🏢", name: "Ruang Seminar", val: "Penuh", cls: "text-red-600" },
-                ].map((item) => (
-                  <div key={item.name} className="flex justify-between items-center py-1">
-                    <span className="text-gray-700">
-                      {item.icon} {item.name}
+        {!loading && (
+          <>
+            <div className="grid grid-cols-12 gap-6 mb-8">
+              {/* KALENDER */}
+              <ContentCard className="col-span-12 xl:col-span-9">
+                <div className="flex flex-wrap justify-between items-center gap-4 mb-5">
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    📅 Kalender Ketersediaan Sarpras
+                  </h2>
+                  <div className="flex gap-4">
+                    <span className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="w-3 h-3 bg-green-500 rounded-full" />
+                      Tersedia
                     </span>
-                    <span className={`font-bold ${item.cls}`}>{item.val}</span>
+                    <span className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="w-3 h-3 bg-red-500 rounded-full" />
+                      Penuh
+                    </span>
                   </div>
-                ))}
+                </div>
+                <FullCalendar
+                  plugins={[dayGridPlugin, interactionPlugin]}
+                  initialView="dayGridMonth"
+                  locale="id"
+                  height="650px"
+                  events={events}
+                  dateClick={handleDateClick}
+                />
+              </ContentCard>
+
+              {/* SIDEBAR */}
+              <div className="col-span-12 xl:col-span-3 flex flex-col gap-6">
+                {/* NOTIFIKASI */}
+                <ContentCard>
+                  <h2 className="font-bold text-xl mb-5 text-gray-800">
+                    🔔 Notifikasi
+                  </h2>
+                  <div className="space-y-4">
+                    {notifikasi.length === 0 ? (
+                      <p className="text-sm text-gray-400">
+                        Tidak ada notifikasi.
+                      </p>
+                    ) : (
+                      notifikasi.map((n, i) => (
+                        <div key={i} className="flex gap-3 items-start">
+                          <div
+                            className={`w-2.5 h-2.5 ${notifColor(n.tipe)} rounded-full mt-2 shrink-0`}
+                          />
+                          <div>
+                            <h4 className="font-semibold text-gray-800">
+                              {n.title}
+                            </h4>
+                            <p className="text-sm text-gray-500">{n.sub}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ContentCard>
+
+                {/* KETERSEDIAAN HARI INI */}
+                {/* <ContentCard>
+                  <h2 className="font-bold text-xl mb-5 text-gray-800">
+                    📦 Ketersediaan Hari Ini
+                  </h2>
+                  <div className="space-y-3">
+                    {ketersediaan.length === 0 ? (
+                      <p className="text-sm text-gray-400">Tidak ada data.</p>
+                    ) : (
+                      ketersediaan.map((item, i) => (
+                        <div
+                          key={i}
+                          className="flex justify-between items-center py-1"
+                        >
+                          <span className="text-gray-700">
+                            {sarprasIcon(item.nama)} {item.nama}
+                          </span>
+                          <span
+                            className={`font-bold ${ketersediaanColor(item.stok)}`}
+                          >
+                            {ketersediaanLabel(item.stok)}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ContentCard> */}
               </div>
+            </div>
+
+            {/* STATUS AKTIF */}
+            <ContentCard className="mb-8">
+              <h2 className="text-2xl font-bold mb-6 text-gray-800">
+                📋 Status Peminjaman Aktif
+              </h2>
+              {peminjamanAktif.length === 0 ? (
+                <p className="text-gray-400">
+                  Tidak ada peminjaman aktif saat ini.
+                </p>
+              ) : (
+                <div className="space-y-6">
+                  {peminjamanAktif.map((item, i) => {
+                    const p = progressInfo(item.status);
+                    return (
+                      <div
+                        key={i}
+                        className={`border-l-4 ${p.borderColor} pl-5 py-1`}
+                      >
+                        <h3 className="font-bold text-lg">{item.nama}</h3>
+                        <p className="text-gray-500">
+                          {item.tanggalMulai && item.tanggalSelesai
+                            ? `${item.tanggalMulai} — ${item.tanggalSelesai}`
+                            : item.status === "Menunggu"
+                              ? "Menunggu Persetujuan"
+                              : item.status}
+                        </p>
+                        <div className="w-full bg-slate-200 rounded-full h-2.5 mt-4">
+                          <div
+                            className={`${p.color} h-2.5 rounded-full`}
+                            style={{ width: p.width }}
+                          />
+                        </div>
+                        {p.label && (
+                          <p
+                            className={`text-sm mt-2 font-medium ${p.labelColor}`}
+                          >
+                            {p.label}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </ContentCard>
-          </div>
-        </div>
 
-        {/* STATUS AKTIF */}
-        <ContentCard className="mb-8">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800">
-            📋 Status Peminjaman Aktif
-          </h2>
-          <div className="space-y-6">
-            <div className="border-l-4 border-green-500 pl-5 py-1">
-              <h3 className="font-bold text-lg">💻 Laptop Asus</h3>
-              <p className="text-gray-500">13 Juni 2026 — 20 Juni 2026</p>
-              <div className="w-full bg-slate-200 rounded-full h-2.5 mt-4">
-                <div className="bg-green-500 h-2.5 rounded-full w-[70%]" />
-              </div>
-              <p className="text-sm mt-2 text-green-600 font-medium">Sedang Dipinjam</p>
-            </div>
-            <div className="border-l-4 border-yellow-500 pl-5 py-1">
-              <h3 className="font-bold text-lg">🏢 Ruang Seminar</h3>
-              <p className="text-gray-500">Menunggu Persetujuan</p>
-              <div className="w-full bg-slate-200 rounded-full h-2.5 mt-4">
-                <div className="bg-yellow-500 h-2.5 rounded-full w-[35%]" />
-              </div>
-            </div>
-          </div>
-        </ContentCard>
-
-        {/* JADWAL PENGEMBALIAN */}
-        <ContentCard>
-          <h2 className="text-xl font-bold mb-4 text-gray-800">
-            📅 Jadwal Pengembalian Terdekat
-          </h2>
-          <div className="space-y-3">
-            {[
-              { icon: "💻", name: "Laptop Asus", date: "20 Juni 2026" },
-              { icon: "📽️", name: "Proyektor Epson", date: "22 Juni 2026" },
-            ].map((item) => (
-              <div
-                key={item.name}
-                className="flex justify-between items-center bg-slate-50 hover:bg-violet-50 p-4 rounded-2xl transition"
-              >
-                <span className="text-gray-700">
-                  {item.icon} {item.name}
-                </span>
-                <span className="font-bold text-gray-800">{item.date}</span>
-              </div>
-            ))}
-          </div>
-        </ContentCard>
+            {/* JADWAL PENGEMBALIAN */}
+            <ContentCard>
+              <h2 className="text-xl font-bold mb-4 text-gray-800">
+                📅 Jadwal Pengembalian Terdekat
+              </h2>
+              {jadwalPengembalian.length === 0 ? (
+                <p className="text-gray-400">Tidak ada jadwal pengembalian.</p>
+              ) : (
+                <div className="space-y-3">
+                  {jadwalPengembalian.map((item, i) => (
+                    <div
+                      key={i}
+                      className="flex justify-between items-center bg-slate-50 hover:bg-violet-50 p-4 rounded-2xl transition"
+                    >
+                      <span className="text-gray-700">
+                        {sarprasIcon(item.nama)} {item.nama}
+                      </span>
+                      <span className="font-bold text-gray-800">
+                        {item.tanggalKembali}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ContentCard>
+          </>
+        )}
       </PageShell>
 
       {/* MODAL */}
@@ -252,7 +401,10 @@ function DashboardPeminjam() {
               Pilih Jenis Peminjaman
             </h2>
             <p className="text-gray-500 mb-6">
-              Tanggal: <span className="font-semibold text-violet-600">{selectedDate}</span>
+              Tanggal:{" "}
+              <span className="font-semibold text-violet-600">
+                {selectedDate}
+              </span>
             </p>
 
             <div className="space-y-3">

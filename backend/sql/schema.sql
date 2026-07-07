@@ -1,5 +1,4 @@
--- Import manual via HeidiSQL / phpMyAdmin di Laragon (opsional)
--- Database dibuat otomatis oleh `npm run init-db` jika MySQL sudah terhubung.
+-- jalankan pake : npm run init-db di /backend
 
 CREATE DATABASE IF NOT EXISTS `sarpras_db`;
 USE `sarpras_db`;
@@ -81,7 +80,7 @@ CREATE TABLE IF NOT EXISTS sarpras (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS laporan_kerusakan (
+CREATE TABLE IF NOT EXISTS laporan_kondisi (
   id INT AUTO_INCREMENT PRIMARY KEY,
   sarpras_id INT NULL,
   barang VARCHAR(200) NOT NULL,
