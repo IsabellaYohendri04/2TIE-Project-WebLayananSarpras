@@ -47,52 +47,57 @@ function attachLaporanRoutes(app) {
     }
   });
 
-  app.put("/api/laporan/:id", authenticate, janitorOrPegawai, async (req, res) => {
-    try {
-      const { status } = req.body;
+  app.put(
+    "/api/laporan/:id",
+    authenticate,
+    janitorOrPegawai,
+    async (req, res) => {
+      try {
+        const { status } = req.body;
 
-      if (!status) {
-        return res.status(400).json({
-          success: false,
-          message: "Status wajib diisi",
-        });
+        if (!status) {
+          return res.status(400).json({
+            success: false,
+            message: "Status wajib diisi",
+          });
+        }
+
+        const allowed = ["MENUNGGU", "DIPROSES", "SELESAI", "DITOLAK"];
+        if (!allowed.includes(status)) {
+          return res.status(400).json({
+            success: false,
+            message: "Status tidak valid",
+          });
+        }
+
+        const pool = getPool();
+        const [existing] = await pool.query(
+          "SELECT id FROM laporan_kerusakan WHERE id = ?",
+          [req.params.id],
+        );
+
+        if (existing.length === 0) {
+          return res
+            .status(404)
+            .json({ success: false, message: "Laporan tidak ditemukan" });
+        }
+
+        await pool.query(
+          "UPDATE laporan_kerusakan SET status = ? WHERE id = ?",
+          [status, req.params.id],
+        );
+
+        const [rows] = await pool.query(
+          "SELECT * FROM laporan_kerusakan WHERE id = ?",
+          [req.params.id],
+        );
+
+        res.json({ success: true, data: formatLaporanRow(rows[0]) });
+      } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
       }
-
-      const allowed = ["MENUNGGU", "DIPROSES", "SELESAI", "DITOLAK"];
-      if (!allowed.includes(status)) {
-        return res.status(400).json({
-          success: false,
-          message: "Status tidak valid",
-        });
-      }
-
-      const pool = getPool();
-      const [existing] = await pool.query(
-        "SELECT id FROM laporan_kerusakan WHERE id = ?",
-        [req.params.id]
-      );
-
-      if (existing.length === 0) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Laporan tidak ditemukan" });
-      }
-
-      await pool.query("UPDATE laporan_kerusakan SET status = ? WHERE id = ?", [
-        status,
-        req.params.id,
-      ]);
-
-      const [rows] = await pool.query(
-        "SELECT * FROM laporan_kerusakan WHERE id = ?",
-        [req.params.id]
-      );
-
-      res.json({ success: true, data: formatLaporanRow(rows[0]) });
-    } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
-    }
-  });
+    },
+  );
 }
 
 module.exports = { attachLaporanRoutes };

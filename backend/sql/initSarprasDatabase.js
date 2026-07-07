@@ -7,7 +7,7 @@ const { getDbConfig } = require("../config/db");
 function loadSeedPeminjamanBarang() {
   const jsonPath = path.join(
     __dirname,
-    "../../public/data/peminjaman-barang.json"
+    "../../public/data/peminjaman-barang.json",
   );
 
   if (!fs.existsSync(jsonPath)) return [];
@@ -198,6 +198,9 @@ async function initSarprasDatabase() {
     "detail_json TEXT NULL",
     "laporan_selesai TINYINT(1) DEFAULT 0",
     "laporan_kondisi_json TEXT NULL",
+    "file_proposal VARCHAR(500) NULL",
+    "jadwal_subjek VARCHAR(255) NULL",
+    "jadwal_pertemuan DATETIME NULL",
   ];
 
   for (const table of [
@@ -218,18 +221,57 @@ async function initSarprasDatabase() {
 
   // ================= SEED USERS =================
   const demoUsers = [
-    ["admin@sarpras.ac.id", "admin123", "pegawai_sarpras", "Admin Sarpras", "19850101", null, "Sistem", "081234567890"],
-    ["janitor@sarpras.ac.id", "janitor123", "janitor", "Budi Janitor", "19900102", null, "Sarpras", "081234567891"],
-    ["peminjam@sarpras.ac.id", "peminjam123", "peminjam", "Andi Mahasiswa", null, "220101001", "Teknik Informatika", "081234567892"],
+    [
+      "admin@sarpras.ac.id",
+      "admin123",
+      "pegawai_sarpras",
+      "Admin Sarpras",
+      "19850101",
+      null,
+      "Sistem",
+      "081234567890",
+    ],
+    [
+      "janitor@sarpras.ac.id",
+      "janitor123",
+      "janitor",
+      "Budi Janitor",
+      "19900102",
+      null,
+      "Sarpras",
+      "081234567891",
+    ],
+    [
+      "peminjam@sarpras.ac.id",
+      "peminjam123",
+      "peminjam",
+      "Andi Mahasiswa",
+      null,
+      "220101001",
+      "Teknik Informatika",
+      "081234567892",
+    ],
   ];
 
   for (const [email, pass, role, nama, nip, nim, prodi, no_hp] of demoUsers) {
-    const [exists] = await db.query("SELECT id FROM users WHERE email = ?", [email]);
+    const [exists] = await db.query("SELECT id FROM users WHERE email = ?", [
+      email,
+    ]);
     if (exists.length === 0) {
       await db.query(
         `INSERT INTO users (email,password,role,nama,nip,nim,prodi,no_hp,status)
          VALUES (?,?,?,?,?,?,?,?,?)`,
-        [email, await bcrypt.hash(pass, 10), role, nama, nip, nim, prodi, no_hp, "aktif"]
+        [
+          email,
+          await bcrypt.hash(pass, 10),
+          role,
+          nama,
+          nip,
+          nim,
+          prodi,
+          no_hp,
+          "aktif",
+        ],
       );
     }
   }
@@ -238,17 +280,35 @@ async function initSarprasDatabase() {
   const [gedungCount] = await db.query("SELECT COUNT(*) as total FROM gedung");
   if (gedungCount[0].total === 0) {
     const gedungSeed = [
-      ["gedung-utama", "Gedung Utama", "🏛️", "Gedung pusat kegiatan akademik", 3],
-      ["gedung-serba-guna", "Gedung Serba Guna", "🏟️", "Event, seminar & kegiatan kampus", 3],
+      [
+        "gedung-utama",
+        "Gedung Utama",
+        "🏛️",
+        "Gedung pusat kegiatan akademik",
+        3,
+      ],
+      [
+        "gedung-serba-guna",
+        "Gedung Serba Guna",
+        "🏟️",
+        "Event, seminar & kegiatan kampus",
+        3,
+      ],
       ["gedung-olahraga", "Gedung Olahraga", "🏀", "Fasilitas olahraga", 1],
-      ["workshop-listrik", "Workshop Listrik", "⚡", "Praktikum teknik elektro", 2],
+      [
+        "workshop-listrik",
+        "Workshop Listrik",
+        "⚡",
+        "Praktikum teknik elektro",
+        2,
+      ],
       ["workshop-mesin", "Workshop Mesin", "🔧", "Praktikum teknik mesin", 2],
       ["dormitori", "Dormitori", "🏠", "Asrama mahasiswa", 3],
     ];
     for (const g of gedungSeed) {
       await db.query(
         "INSERT INTO gedung (slug, nama, icon, deskripsi, lantai) VALUES (?, ?, ?, ?, ?)",
-        g
+        g,
       );
     }
 
@@ -259,11 +319,19 @@ async function initSarprasDatabase() {
       const gid = gedungMap[slug];
       for (let n = from; n <= to; n++) {
         const kode = String(n);
-        const status = n % 7 === 0 ? "terbatas" : n % 11 === 0 ? "penuh" : "tersedia";
+        const status =
+          n % 7 === 0 ? "terbatas" : n % 11 === 0 ? "penuh" : "tersedia";
         await db.query(
           `INSERT INTO ruangan (gedung_id, kode, nama, tipe, lantai, kapasitas, fasilitas, status)
            VALUES (?, ?, ?, 'kelas', ?, 40, ?, ?)`,
-          [gid, kode, `Ruang Kelas ${kode}`, lantai, JSON.stringify(["Proyektor", "AC", "Whiteboard"]), status]
+          [
+            gid,
+            kode,
+            `Ruang Kelas ${kode}`,
+            lantai,
+            JSON.stringify(["Proyektor", "AC", "Whiteboard"]),
+            status,
+          ],
         );
       }
     }
@@ -276,7 +344,14 @@ async function initSarprasDatabase() {
         await db.query(
           `INSERT INTO ruangan (gedung_id, kode, nama, tipe, lantai, kapasitas, fasilitas, status)
            VALUES (?, ?, ?, 'kamar', ?, 4, ?, ?)`,
-          [gid, kode, `Kamar ${kode}`, lantai, JSON.stringify(["Kasur", "Lemari"]), status]
+          [
+            gid,
+            kode,
+            `Kamar ${kode}`,
+            lantai,
+            JSON.stringify(["Kasur", "Lemari"]),
+            status,
+          ],
         );
       }
     }
@@ -288,7 +363,13 @@ async function initSarprasDatabase() {
         await db.query(
           `INSERT INTO laboratorium (gedung_id, kode, nama, lantai, kapasitas, fasilitas, status)
            VALUES (?, ?, ?, ?, 30, ?, 'tersedia')`,
-          [gid, kode, labs[i], lantai, JSON.stringify(["Meja Lab", "AC", "Alat Praktikum"])]
+          [
+            gid,
+            kode,
+            labs[i],
+            lantai,
+            JSON.stringify(["Meja Lab", "AC", "Alat Praktikum"]),
+          ],
         );
       }
     }
@@ -302,14 +383,31 @@ async function initSarprasDatabase() {
     await seedKamar("dormitori", 1, 1, 12);
     await seedKamar("dormitori", 2, 1, 12);
     await seedKamar("dormitori", 3, 1, 12);
-    await seedLab("gedung-utama", 3, ["Lab Komputer", "Lab Kimia", "Lab Fisika", "Lab Microbiology", "Lab Bahasa"]);
-    await seedLab("gedung-serba-guna", 3, ["Lab Multimedia", "Lab Desain", "Lab Prototyping", "Lab IoT"]);
-    await seedLab("workshop-listrik", 2, ["Lab Elektronika", "Lab PLC", "Lab Instrumentasi"]);
+    await seedLab("gedung-utama", 3, [
+      "Lab Komputer",
+      "Lab Kimia",
+      "Lab Fisika",
+      "Lab Microbiology",
+      "Lab Bahasa",
+    ]);
+    await seedLab("gedung-serba-guna", 3, [
+      "Lab Multimedia",
+      "Lab Desain",
+      "Lab Prototyping",
+      "Lab IoT",
+    ]);
+    await seedLab("workshop-listrik", 2, [
+      "Lab Elektronika",
+      "Lab PLC",
+      "Lab Instrumentasi",
+    ]);
     await seedLab("workshop-mesin", 2, ["Lab CNC", "Lab Las", "Lab Metrologi"]);
   }
 
   // ================= SEED BARANG =================
-  const [barangMasterCount] = await db.query("SELECT COUNT(*) as total FROM barang");
+  const [barangMasterCount] = await db.query(
+    "SELECT COUNT(*) as total FROM barang",
+  );
   if (barangMasterCount[0].total === 0) {
     const barangSeed = [
       ["Proyektor Epson EB-X06", "Elektronik", 8, "tersedia"],
@@ -324,14 +422,14 @@ async function initSarprasDatabase() {
     for (const b of barangSeed) {
       await db.query(
         "INSERT INTO barang (nama, kategori, stok, status) VALUES (?, ?, ?, ?)",
-        b
+        b,
       );
     }
   }
 
   // ================= SEED PEMINJAMAN =================
   const [barangCount] = await db.query(
-    "SELECT COUNT(*) as total FROM peminjaman_barang"
+    "SELECT COUNT(*) as total FROM peminjaman_barang",
   );
 
   if (barangCount[0].total === 0) {
@@ -353,9 +451,29 @@ async function initSarprasDatabase() {
           item.tanggal_kembali,
           item.status,
           item.catatan_admin,
-        ]
+        ],
       );
     }
+  }
+
+  // ================= MIGRASI COL LAPORAN KONDISI =================
+  // Pastikan kolom yang dipakai fitur laporan kondisi sudah ada.
+  for (const table of [
+    "peminjaman_barang",
+    "peminjaman_ruangan",
+    "peminjaman_laboratorium",
+  ]) {
+    // laporan_selesai & laporan_kondisi_json dipakai oleh endpoint /api/pegawai/laporan-kondisi
+    await db
+      .query(
+        `ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS laporan_selesai TINYINT(1) DEFAULT 0`,
+      )
+      .catch(() => {});
+    await db
+      .query(
+        `ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS laporan_kondisi_json TEXT NULL`,
+      )
+      .catch(() => {});
   }
 
   await db.end();

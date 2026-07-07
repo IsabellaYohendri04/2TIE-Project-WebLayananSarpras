@@ -12,7 +12,7 @@ export default function MainLayout() {
   const storedSidebarExpanded = localStorage.getItem("sidebar-expanded");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(
-    storedSidebarExpanded === null ? false : storedSidebarExpanded === "true"
+    storedSidebarExpanded === null ? false : storedSidebarExpanded === "true",
   );
 
   useEffect(() => {

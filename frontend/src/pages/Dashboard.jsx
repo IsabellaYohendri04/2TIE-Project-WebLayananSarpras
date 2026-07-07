@@ -10,11 +10,28 @@ import {
   Mic,
   Clock3,
 } from "lucide-react";
-import { Chart, LineController, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend } from "chart.js";
+import {
+  Chart,
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+} from "chart.js";
 import { useAuth } from "../context/AuthContext";
 import { getPegawaiDashboard } from "./pegawai/services/pegawaiService";
 
-Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend);
+Chart.register(
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+);
 
 const TIPE_ICON = {
   barang: Laptop,
@@ -91,7 +108,11 @@ function Dashboard() {
     totalPegawai: 0,
     totalPeminjaman: 0,
   });
-  const [chart, setChart] = useState({ labels: [], peminjaman: [], pengembalian: [] });
+  const [chart, setChart] = useState({
+    labels: [],
+    peminjaman: [],
+    pengembalian: [],
+  });
   const [peminjamanTerbaru, setPeminjamanTerbaru] = useState([]);
   const [notifications, setNotifications] = useState([]);
 
@@ -109,7 +130,7 @@ function Dashboard() {
       .catch((err) => {
         setError(
           err.response?.data?.message ||
-            "Gagal memuat dashboard. Pastikan server backend berjalan."
+            "Gagal memuat dashboard. Pastikan server backend berjalan.",
         );
       })
       .finally(() => setLoading(false));
@@ -276,10 +297,14 @@ function Dashboard() {
             <h3 className="font-semibold text-xl text-gray-800 flex items-center gap-2 mb-4">
               🔔 Notifikasi Peminjaman
             </h3>
-            <p className="text-xs text-gray-400 mb-4">10 pengajuan terbaru dari database</p>
+            <p className="text-xs text-gray-400 mb-4">
+              10 pengajuan terbaru dari database
+            </p>
             <div className="space-y-3 max-h-[420px] overflow-y-auto">
               {notifications.length === 0 ? (
-                <p className="text-sm text-gray-500">Belum ada data peminjaman</p>
+                <p className="text-sm text-gray-500">
+                  Belum ada data peminjaman
+                </p>
               ) : (
                 notifications.map((n) => (
                   <Link
@@ -287,11 +312,17 @@ function Dashboard() {
                     to={n.link}
                     className="flex gap-3 items-start hover:bg-gray-50 p-2 rounded-xl transition"
                   >
-                    <div className={`w-2.5 h-2.5 ${n.color} rounded-full mt-2 shrink-0`} />
+                    <div
+                      className={`w-2.5 h-2.5 ${n.color} rounded-full mt-2 shrink-0`}
+                    />
                     <div className="min-w-0">
-                      <h4 className="font-semibold text-gray-800 text-sm truncate">{n.title}</h4>
+                      <h4 className="font-semibold text-gray-800 text-sm truncate">
+                        {n.title}
+                      </h4>
                       <p className="text-xs text-gray-500">{n.sub}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{n.tanggal}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {n.tanggal}
+                      </p>
                     </div>
                   </Link>
                 ))
@@ -305,7 +336,10 @@ function Dashboard() {
                 <Clock3 size={22} />
                 Peminjaman Terbaru
               </h3>
-              <Link to="/peminjaman/barang" className="text-indigo-600 font-medium text-sm">
+              <Link
+                to="/peminjaman/barang"
+                className="text-indigo-600 font-medium text-sm"
+              >
                 Lihat Semua
               </Link>
             </div>
@@ -326,7 +360,9 @@ function Dashboard() {
                         {getItemIcon(item.tipe)}
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-800">{item.nama}</h4>
+                        <h4 className="font-semibold text-gray-800">
+                          {item.nama}
+                        </h4>
                         <p className="text-sm text-gray-500">
                           Diajukan oleh: {item.peminjam}
                         </p>

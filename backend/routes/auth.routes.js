@@ -66,7 +66,7 @@ function attachAuthRoutes(app) {
       }
 
       const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role, nama: user.nama },
+        { id: user.id, email: user.email, role: user.role, nama: user.nama, nim: user.nim },
         process.env.JWT_SECRET || "sarpras_jwt_secret",
         { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
       );

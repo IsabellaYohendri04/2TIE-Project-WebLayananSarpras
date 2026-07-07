@@ -45,7 +45,11 @@ function peminjamanLink(tipe) {
 
 function mapPeminjamanNotification(row) {
   const tipeLabel =
-    row.tipe === "barang" ? "Barang" : row.tipe === "ruangan" ? "Ruangan" : "Laboratorium";
+    row.tipe === "barang"
+      ? "Barang"
+      : row.tipe === "ruangan"
+        ? "Ruangan"
+        : "Laboratorium";
   return {
     id: `${row.tipe}-${row.id}`,
     color: notificationColor(row.status),
@@ -67,7 +71,6 @@ function sanitizePegawai(user) {
     no_hp: user.no_hp,
     status: user.status,
     created_at: user.created_at,
-    updated_at: user.updated_at,
   };
 }
 
@@ -99,7 +102,8 @@ function attachPegawaiRoutes(app) {
           FROM peminjaman_laboratorium
         `;
 
-        const [[statsRow]] = await pool.query(`
+        const [[statsRow]] = await pool.query(
+          `
           SELECT
             SUM(CASE WHEN status = 'Disetujui' AND (tanggal_kembali IS NULL OR tanggal_kembali >= ?) THEN 1 ELSE 0 END) AS aktif,
             SUM(CASE WHEN status = 'Menunggu' THEN 1 ELSE 0 END) AS menunggu,
@@ -107,7 +111,9 @@ function attachPegawaiRoutes(app) {
             SUM(CASE WHEN status = 'Disetujui' AND tanggal_kembali IS NOT NULL AND tanggal_kembali < ?
               AND COALESCE(laporan_selesai, 0) = 0 THEN 1 ELSE 0 END) AS terlambat
           FROM (${unionQuery}) AS p
-        `, [today, today]);
+        `,
+          [today, today],
+        );
 
         const chartLabels = [];
         const chartPeminjaman = [];
@@ -118,23 +124,23 @@ function attachPegawaiRoutes(app) {
           d.setDate(d.getDate() - i);
           const dateStr = d.toISOString().slice(0, 10);
           chartLabels.push(
-            d.toLocaleDateString("id-ID", { day: "numeric", month: "short" })
+            d.toLocaleDateString("id-ID", { day: "numeric", month: "short" }),
           );
 
           const [[pinjamRow]] = await pool.query(
             `SELECT COUNT(*) AS total FROM (${unionQuery}) AS p WHERE DATE(created_at) = ?`,
-            [dateStr]
+            [dateStr],
           );
           const [[kembaliRow]] = await pool.query(
             `SELECT COUNT(*) AS total FROM (${unionQuery}) AS p WHERE laporan_selesai = 1 AND DATE(tanggal_kembali) = ?`,
-            [dateStr]
+            [dateStr],
           );
           chartPeminjaman.push(Number(pinjamRow.total) || 0);
           chartPengembalian.push(Number(kembaliRow.total) || 0);
         }
 
         const [recentRows] = await pool.query(
-          `SELECT * FROM (${unionQuery}) AS p ORDER BY created_at DESC LIMIT 10`
+          `SELECT * FROM (${unionQuery}) AS p ORDER BY created_at DESC LIMIT 10`,
         );
 
         const recentPeminjaman = recentRows.map((row) => ({
@@ -149,7 +155,7 @@ function attachPegawaiRoutes(app) {
         }));
 
         const [notifRows] = await pool.query(
-          `SELECT * FROM (${unionQuery}) AS p ORDER BY created_at DESC LIMIT 10`
+          `SELECT * FROM (${unionQuery}) AS p ORDER BY created_at DESC LIMIT 10`,
         );
 
         const notifications = notifRows.map(mapPeminjamanNotification);
@@ -162,11 +168,11 @@ function attachPegawaiRoutes(app) {
         `);
 
         const [[pegawaiRow]] = await pool.query(
-          "SELECT COUNT(*) AS total FROM users WHERE role = 'pegawai_sarpras' AND status = 'aktif'"
+          "SELECT COUNT(*) AS total FROM users WHERE role = 'pegawai_sarpras' AND status = 'aktif'",
         );
 
         const [[totalPeminjamanRow]] = await pool.query(
-          `SELECT COUNT(*) AS total FROM (${unionQuery}) AS p`
+          `SELECT COUNT(*) AS total FROM (${unionQuery}) AS p`,
         );
 
         res.json({
@@ -193,7 +199,7 @@ function attachPegawaiRoutes(app) {
       } catch (error) {
         res.status(500).json({ success: false, message: error.message });
       }
-    }
+    },
   );
 
   app.get(
@@ -215,7 +221,7 @@ function attachPegawaiRoutes(app) {
         `;
 
         const [rows] = await pool.query(
-          `SELECT * FROM (${unionQuery}) AS p ORDER BY created_at DESC LIMIT 10`
+          `SELECT * FROM (${unionQuery}) AS p ORDER BY created_at DESC LIMIT 10`,
         );
 
         const notifications = rows.map(mapPeminjamanNotification);
@@ -224,7 +230,7 @@ function attachPegawaiRoutes(app) {
       } catch (error) {
         res.status(500).json({ success: false, message: error.message });
       }
-    }
+    },
   );
 
   app.get(
@@ -238,8 +244,7 @@ function attachPegawaiRoutes(app) {
         const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 10));
         const offset = (pageNum - 1) * limitNum;
 
-        let where =
-          "FROM users WHERE role = 'pegawai_sarpras'";
+        let where = "FROM users WHERE role = 'pegawai_sarpras'";
         const params = [];
 
         if (search) {
@@ -257,7 +262,7 @@ function attachPegawaiRoutes(app) {
         const pool = getPool();
         const [[countRow]] = await pool.query(
           `SELECT COUNT(*) AS total ${where}`,
-          params
+          params,
         );
         const total = Number(countRow.total) || 0;
 
@@ -266,12 +271,12 @@ function attachPegawaiRoutes(app) {
             SUM(CASE WHEN status = 'aktif' THEN 1 ELSE 0 END) AS aktif,
             SUM(CASE WHEN status = 'nonaktif' THEN 1 ELSE 0 END) AS nonaktif
           ${where}`,
-          params
+          params,
         );
 
         const [rows] = await pool.query(
-          `SELECT id, nip, nama, email, divisi, no_hp, status, created_at, updated_at ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-          [...params, limitNum, offset]
+          `SELECT id, nip, nama, email, divisi, no_hp, status, created_at ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+          [...params, limitNum, offset],
         );
 
         res.json({
@@ -292,7 +297,7 @@ function attachPegawaiRoutes(app) {
       } catch (error) {
         res.status(500).json({ success: false, message: error.message });
       }
-    }
+    },
   );
 
   app.get(
@@ -303,8 +308,8 @@ function attachPegawaiRoutes(app) {
       try {
         const pool = getPool();
         const [rows] = await pool.query(
-          "SELECT id, nip, nama, email, divisi, no_hp, status, created_at, updated_at FROM users WHERE id = ? AND role = 'pegawai_sarpras'",
-          [req.params.id]
+          "SELECT id, nip, nama, email, divisi, no_hp, status, created_at FROM users WHERE id = ? AND role = 'pegawai_sarpras'",
+          [req.params.id],
         );
 
         if (rows.length === 0) {
@@ -317,7 +322,7 @@ function attachPegawaiRoutes(app) {
       } catch (error) {
         res.status(500).json({ success: false, message: error.message });
       }
-    }
+    },
   );
 
   app.post(
@@ -326,14 +331,12 @@ function attachPegawaiRoutes(app) {
     authorize("pegawai_sarpras"),
     async (req, res) => {
       try {
-        const { nip, nama, email, password, divisi, no_hp, status } =
-          req.body;
+        const { nip, nama, email, password, divisi, no_hp, status } = req.body;
 
         if (!nip || !nama || !email || !password) {
           return res.status(400).json({
             success: false,
-            message:
-              "NIP, nama, email, dan password wajib diisi",
+            message: "NIP, nama, email, dan password wajib diisi",
           });
         }
 
@@ -350,19 +353,19 @@ function attachPegawaiRoutes(app) {
             divisi || "Sarana Prasarana",
             no_hp || null,
             status || "aktif",
-          ]
+          ],
         );
 
         const [rows] = await pool.query(
-          "SELECT id, nip, nama, email, divisi, no_hp, status, created_at, updated_at FROM users WHERE id = ?",
-          [result.insertId]
+          "SELECT id, nip, nama, email, divisi, no_hp, status, created_at FROM users WHERE id = ?",
+          [result.insertId],
         );
 
         res.status(201).json({ success: true, data: sanitizePegawai(rows[0]) });
       } catch (error) {
         res.status(500).json({ success: false, message: error.message });
       }
-    }
+    },
   );
 
   app.put(
@@ -371,14 +374,12 @@ function attachPegawaiRoutes(app) {
     authorize("pegawai_sarpras"),
     async (req, res) => {
       try {
-        const { nip, nama, email, password, divisi, no_hp, status } =
-          req.body;
+        const { nip, nama, email, password, divisi, no_hp, status } = req.body;
 
         if (!nip || !nama || !email) {
           return res.status(400).json({
             success: false,
-            message:
-              "NIP, nama, dan email wajib diisi",
+            message: "NIP, nama, dan email wajib diisi",
           });
         }
 
@@ -386,7 +387,7 @@ function attachPegawaiRoutes(app) {
 
         const [existing] = await pool.query(
           "SELECT * FROM users WHERE id = ? AND role = 'pegawai_sarpras'",
-          [req.params.id]
+          [req.params.id],
         );
 
         if (existing.length === 0) {
@@ -410,7 +411,7 @@ function attachPegawaiRoutes(app) {
               no_hp || null,
               status || "aktif",
               req.params.id,
-            ]
+            ],
           );
         } else {
           await pool.query(
@@ -423,20 +424,20 @@ function attachPegawaiRoutes(app) {
               no_hp || null,
               status || "aktif",
               req.params.id,
-            ]
+            ],
           );
         }
 
         const [rows] = await pool.query(
-          "SELECT id, nip, nama, email, divisi, no_hp, status, created_at, updated_at FROM users WHERE id = ?",
-          [req.params.id]
+          "SELECT id, nip, nama, email, divisi, no_hp, status, created_at FROM users WHERE id = ?",
+          [req.params.id],
         );
 
         res.json({ success: true, data: sanitizePegawai(rows[0]) });
       } catch (error) {
         res.status(500).json({ success: false, message: error.message });
       }
-    }
+    },
   );
 
   app.delete(
@@ -455,7 +456,7 @@ function attachPegawaiRoutes(app) {
         const pool = getPool();
         const [existing] = await pool.query(
           "SELECT * FROM users WHERE id = ? AND role = 'pegawai_sarpras'",
-          [req.params.id]
+          [req.params.id],
         );
 
         if (existing.length === 0) {
@@ -467,14 +468,14 @@ function attachPegawaiRoutes(app) {
 
         await pool.query(
           "DELETE FROM users WHERE id = ? AND role = 'pegawai_sarpras'",
-          [req.params.id]
+          [req.params.id],
         );
 
         res.json({ success: true, message: "Pegawai berhasil dihapus" });
       } catch (error) {
         res.status(500).json({ success: false, message: error.message });
       }
-    }
+    },
   );
 
   const laporanTables = {
@@ -509,6 +510,35 @@ function attachPegawaiRoutes(app) {
     };
   }
 
+  a// =============================================
+  // LAPORAN KONDISI — harus SEBELUM /api/pegawai/:id
+  // =============================================
+
+  const laporanTables = {
+    barang: { table: "peminjaman_barang", itemCol: "barang" },
+    ruangan: { table: "peminjaman_ruangan", itemCol: "ruangan" },
+    laboratorium: { table: "peminjaman_laboratorium", itemCol: "laboratorium" },
+  };
+
+  function parseLaporanRow(row, tipe, itemCol) {
+    let laporan = null;
+    if (row.laporan_kondisi_json) {
+      try { laporan = JSON.parse(row.laporan_kondisi_json); } catch { laporan = null; }
+    }
+    return {
+      id: row.id, tipe,
+      item: row[itemCol],
+      kategori: row.kategori,
+      nama: row.nama, nim: row.nim, prodi: row.prodi,
+      tanggalPinjam: formatDate(row.tanggal_pinjam),
+      tanggalKembali: formatDate(row.tanggal_kembali),
+      status: row.status,
+      laporanSelesai: Boolean(row.laporan_selesai),
+      laporan,
+      createdAt: row.created_at,
+    };
+  }
+
   app.get(
     "/api/pegawai/laporan-kondisi",
     authenticate,
@@ -520,35 +550,32 @@ function attachPegawaiRoutes(app) {
         const results = [];
 
         const typesToQuery =
-          tipe && tipe !== "all" ? [[tipe, laporanTables[tipe]]].filter(([, v]) => v) : Object.entries(laporanTables);
+          tipe && tipe !== "all"
+            ? [[tipe, laporanTables[tipe]]].filter(([, v]) => v)
+            : Object.entries(laporanTables);
 
         for (const [typeKey, { table, itemCol }] of typesToQuery) {
           let query = `SELECT * FROM ${table} WHERE laporan_selesai = 1`;
           const params = [];
-
           if (search) {
             query += ` AND (${itemCol} LIKE ? OR nama LIKE ? OR nim LIKE ?)`;
             const term = `%${search}%`;
             params.push(term, term, term);
           }
-
           const [rows] = await pool.query(query, params);
           results.push(...rows.map((r) => parseLaporanRow(r, typeKey, itemCol)));
         }
 
         let filtered = results;
-        if (status === "pending") {
-          filtered = results.filter((r) => !r.laporan);
-        } else if (status === "submitted") {
-          filtered = results.filter((r) => r.laporan);
-        }
+        if (status === "pending") filtered = results.filter((r) => !r.laporan);
+        else if (status === "submitted") filtered = results.filter((r) => r.laporan);
 
         filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         res.json({ success: true, data: filtered });
       } catch (error) {
         res.status(500).json({ success: false, message: error.message });
       }
-    }
+    },
   );
 
   app.delete(
@@ -558,21 +585,36 @@ function attachPegawaiRoutes(app) {
     async (req, res) => {
       try {
         const config = laporanTables[req.params.tipe];
-        if (!config) {
-          return res.status(400).json({ success: false, message: "Tipe tidak valid" });
-        }
+        if (!config) return res.status(400).json({ success: false, message: "Tipe tidak valid" });
 
         const pool = getPool();
         await pool.query(
           `UPDATE ${config.table} SET laporan_selesai = 0, laporan_kondisi_json = NULL WHERE id = ?`,
-          [req.params.id]
+          [req.params.id],
         );
-
         res.json({ success: true, message: "Laporan kondisi berhasil dihapus" });
       } catch (error) {
         res.status(500).json({ success: false, message: error.message });
       }
-    }
+    },
+  );
+
+  // =============================================
+
+        const pool = getPool();
+        await pool.query(
+          `UPDATE ${config.table} SET laporan_selesai = 0, laporan_kondisi_json = NULL WHERE id = ?`,
+          [req.params.id],
+        );
+
+        res.json({
+          success: true,
+          message: "Laporan kondisi berhasil dihapus",
+        });
+      } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+      }
+    },
   );
 }
 

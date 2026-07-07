@@ -5,7 +5,11 @@ import SidebarLinkGroup from "./SidebarLinkGroup";
 
 const GEDUNG_DROPDOWN = [
   { slug: "gedung-utama", label: "Gedung Utama", pathType: "ruangan" },
-  { slug: "gedung-serba-guna", label: "Gedung Serba Guna", pathType: "ruangan" },
+  {
+    slug: "gedung-serba-guna",
+    label: "Gedung Serba Guna",
+    pathType: "ruangan",
+  },
   { slug: "gedung-olahraga", label: "Gedung Olahraga", pathType: "olahraga" },
   { slug: "workshop-listrik", label: "Workshop Listrik", pathType: "ruangan" },
   { slug: "workshop-mesin", label: "Workshop Mesin", pathType: "ruangan" },
@@ -39,7 +43,13 @@ function isKelolaRuanganActive(pathname, search, g) {
   return params.get("gedung") === g.slug;
 }
 
-function PeminjamanMenu({ base, pathname, setSidebarExpanded, dashboardLabel, hideDashboard }) {
+function PeminjamanMenu({
+  base,
+  pathname,
+  setSidebarExpanded,
+  dashboardLabel,
+  hideDashboard,
+}) {
   const ruanganActive =
     pathname.includes("peminjaman-ruangan") ||
     pathname.includes("peminjaman-lab") ||
@@ -49,26 +59,39 @@ function PeminjamanMenu({ base, pathname, setSidebarExpanded, dashboardLabel, hi
   return (
     <>
       {!hideDashboard && (
-      <SidebarLinkGroup activecondition={pathname === base || pathname === `${base}/`}>
-        {() => (
-          <NavLink end to={base} className={({ isActive }) => navLinkClass(isActive)}>
-            <div className="flex items-center">
-              <DashboardIcon active={pathname === base} />
-              <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                {dashboardLabel}
-              </span>
-            </div>
-          </NavLink>
-        )}
-      </SidebarLinkGroup>
+        <SidebarLinkGroup
+          activecondition={pathname === base || pathname === `${base}/`}
+        >
+          {() => (
+            <NavLink
+              end
+              to={base}
+              className={({ isActive }) => navLinkClass(isActive)}
+            >
+              <div className="flex items-center">
+                <DashboardIcon active={pathname === base} />
+                <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                  {dashboardLabel}
+                </span>
+              </div>
+            </NavLink>
+          )}
+        </SidebarLinkGroup>
       )}
 
-      <SidebarLinkGroup activecondition={pathname.includes("peminjaman-barang")}>
+      <SidebarLinkGroup
+        activecondition={pathname.includes("peminjaman-barang")}
+      >
         {() => (
-          <NavLink to={`${base}/peminjaman-barang`} className={({ isActive }) => navLinkClass(isActive)}>
+          <NavLink
+            to={`${base}/peminjaman-barang`}
+            className={({ isActive }) => navLinkClass(isActive)}
+          >
             <div className="flex items-center">
               <span className="text-lg mr-3">📦</span>
-              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Peminjaman Barang</span>
+              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                Peminjaman Barang
+              </span>
             </div>
           </NavLink>
         )}
@@ -89,9 +112,14 @@ function PeminjamanMenu({ base, pathname, setSidebarExpanded, dashboardLabel, hi
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <span className="text-lg mr-3">🏢</span>
-                  <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Peminjaman Ruangan</span>
+                  <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                    Peminjaman Ruangan
+                  </span>
                 </div>
-                <svg className={`w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 ${open && "rotate-180"}`} viewBox="0 0 12 12">
+                <svg
+                  className={`w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 ${open && "rotate-180"}`}
+                  viewBox="0 0 12 12"
+                >
                   <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
                 </svg>
               </div>
@@ -100,7 +128,10 @@ function PeminjamanMenu({ base, pathname, setSidebarExpanded, dashboardLabel, hi
               <ul className={`pl-8 mt-1 ${!open && "hidden"}`}>
                 {GEDUNG_DROPDOWN.map((g) => (
                   <li key={g.slug} className="mb-1">
-                    <NavLink to={gedungLink(base, g)} className={({ isActive }) => subLinkClass(isActive)}>
+                    <NavLink
+                      to={gedungLink(base, g)}
+                      className={({ isActive }) => subLinkClass(isActive)}
+                    >
                       {g.label}
                     </NavLink>
                   </li>
@@ -111,12 +142,19 @@ function PeminjamanMenu({ base, pathname, setSidebarExpanded, dashboardLabel, hi
         )}
       </SidebarLinkGroup>
 
-      <SidebarLinkGroup activecondition={pathname.includes("riwayat-peminjaman")}>
+      <SidebarLinkGroup
+        activecondition={pathname.includes("riwayat-peminjaman")}
+      >
         {() => (
-          <NavLink to={`${base}/riwayat-peminjaman`} className={({ isActive }) => navLinkClass(isActive)}>
+          <NavLink
+            to={`${base}/riwayat-peminjaman`}
+            className={({ isActive }) => navLinkClass(isActive)}
+          >
             <div className="flex items-center">
               <span className="text-lg mr-3">📜</span>
-              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Riwayat Peminjaman</span>
+              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                Riwayat Peminjaman
+              </span>
             </div>
           </NavLink>
         )}
@@ -124,10 +162,15 @@ function PeminjamanMenu({ base, pathname, setSidebarExpanded, dashboardLabel, hi
 
       <SidebarLinkGroup activecondition={pathname.includes("laporan-kondisi")}>
         {() => (
-          <NavLink to={`${base}/laporan-kondisi`} className={({ isActive }) => navLinkClass(isActive)}>
+          <NavLink
+            to={`${base}/laporan-kondisi`}
+            className={({ isActive }) => navLinkClass(isActive)}
+          >
             <div className="flex items-center">
               <span className="text-lg mr-3">📝</span>
-              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Laporan Kondisi</span>
+              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                Laporan Kondisi
+              </span>
             </div>
           </NavLink>
         )}
@@ -172,9 +215,14 @@ function PegawaiPeminjamanMenu({ pathname, setSidebarExpanded }) {
 
   return (
     <>
-      <SidebarLinkGroup activecondition={pathname.includes("/peminjaman/barang")}>
+      <SidebarLinkGroup
+        activecondition={pathname.includes("/peminjaman/barang")}
+      >
         {() => (
-          <NavLink to="/peminjaman/barang" className={({ isActive }) => navLinkClass(isActive)}>
+          <NavLink
+            to="/peminjaman/barang"
+            className={({ isActive }) => navLinkClass(isActive)}
+          >
             <div className="flex items-center">
               <span className="text-lg mr-3">📦</span>
               <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
@@ -204,7 +252,10 @@ function PegawaiPeminjamanMenu({ pathname, setSidebarExpanded }) {
                     Peminjaman Ruangan
                   </span>
                 </div>
-                <svg className={`w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 ${open && "rotate-180"}`} viewBox="0 0 12 12">
+                <svg
+                  className={`w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 ${open && "rotate-180"}`}
+                  viewBox="0 0 12 12"
+                >
                   <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
                 </svg>
               </div>
@@ -213,13 +264,19 @@ function PegawaiPeminjamanMenu({ pathname, setSidebarExpanded }) {
               <ul className={`pl-8 mt-1 ${!open && "hidden"}`}>
                 {GEDUNG_DROPDOWN.map((g) => (
                   <li key={g.slug} className="mb-1">
-                    <NavLink to={gedungLinkPegawai(g)} className={({ isActive }) => subLinkClass(isActive)}>
+                    <NavLink
+                      to={gedungLinkPegawai(g)}
+                      className={({ isActive }) => subLinkClass(isActive)}
+                    >
                       {g.label}
                     </NavLink>
                   </li>
                 ))}
                 <li className="mb-1">
-                  <NavLink to="/peminjaman/laboratorium" className={({ isActive }) => subLinkClass(isActive)}>
+                  <NavLink
+                    to="/peminjaman/laboratorium"
+                    className={({ isActive }) => subLinkClass(isActive)}
+                  >
                     Laboratorium
                   </NavLink>
                 </li>
@@ -241,7 +298,10 @@ function KelolaSarprasMenu({ pathname, search, setSidebarExpanded }) {
     <>
       <SidebarLinkGroup activecondition={pathname === "/fasilitas/barang"}>
         {() => (
-          <NavLink to="/fasilitas/barang" className={({ isActive }) => navLinkClass(isActive)}>
+          <NavLink
+            to="/fasilitas/barang"
+            className={({ isActive }) => navLinkClass(isActive)}
+          >
             <div className="flex items-center">
               <span className="text-lg mr-3">📦</span>
               <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
@@ -271,7 +331,10 @@ function KelolaSarprasMenu({ pathname, search, setSidebarExpanded }) {
                     Kelola Ruangan
                   </span>
                 </div>
-                <svg className={`w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 ${open && "rotate-180"}`} viewBox="0 0 12 12">
+                <svg
+                  className={`w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 ${open && "rotate-180"}`}
+                  viewBox="0 0 12 12"
+                >
                   <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
                 </svg>
               </div>
@@ -282,7 +345,9 @@ function KelolaSarprasMenu({ pathname, search, setSidebarExpanded }) {
                   <li key={g.slug} className="mb-1">
                     <NavLink
                       to={kelolaRuanganLink(g)}
-                      className={() => subLinkClass(isKelolaRuanganActive(pathname, search, g))}
+                      className={() =>
+                        subLinkClass(isKelolaRuanganActive(pathname, search, g))
+                      }
                     >
                       {g.label}
                     </NavLink>
@@ -316,7 +381,11 @@ function PegawaiNav({ pathname, search, setSidebarExpanded }) {
       <ul className="mt-3">
         <SidebarLinkGroup activecondition={pathname === "/"}>
           {() => (
-            <NavLink end to="/" className={({ isActive }) => navLinkClass(isActive)}>
+            <NavLink
+              end
+              to="/"
+              className={({ isActive }) => navLinkClass(isActive)}
+            >
               <div className="flex items-center">
                 <DashboardIcon active={pathname === "/"} />
                 <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
@@ -329,7 +398,10 @@ function PegawaiNav({ pathname, search, setSidebarExpanded }) {
 
         <SidebarLinkGroup activecondition={pathname === "/pegawai"}>
           {() => (
-            <NavLink to="/pegawai" className={({ isActive }) => navLinkClass(isActive)}>
+            <NavLink
+              to="/pegawai"
+              className={({ isActive }) => navLinkClass(isActive)}
+            >
               <div className="flex items-center">
                 <span className="text-lg mr-3">👥</span>
                 <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
@@ -343,11 +415,40 @@ function PegawaiNav({ pathname, search, setSidebarExpanded }) {
 
       <h3 className="text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3 mt-6">
         <span className="lg:hidden lg:sidebar-expanded:block 2xl:block">
+          Kelola Laporan Kondisi
+        </span>
+      </h3>
+      <ul className="mt-3">
+        <SidebarLinkGroup
+          activecondition={pathname.includes("/laporan-kondisi")}
+        >
+          {() => (
+            <NavLink
+              to="/laporan-kondisi"
+              className={({ isActive }) => navLinkClass(isActive)}
+            >
+              <div className="flex items-center">
+                <span className="text-lg mr-3">📝</span>
+                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                  Laporan Kondisi
+                </span>
+              </div>
+            </NavLink>
+          )}
+        </SidebarLinkGroup>
+      </ul>
+
+      <h3 className="text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3 mt-6">
+        <span className="lg:hidden lg:sidebar-expanded:block 2xl:block">
           Kelola Sarana Prasarana
         </span>
       </h3>
       <ul className="mt-3">
-        <KelolaSarprasMenu pathname={pathname} search={search} setSidebarExpanded={setSidebarExpanded} />
+        <KelolaSarprasMenu
+          pathname={pathname}
+          search={search}
+          setSidebarExpanded={setSidebarExpanded}
+        />
       </ul>
 
       <h3 className="text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3 mt-6">
@@ -356,7 +457,10 @@ function PegawaiNav({ pathname, search, setSidebarExpanded }) {
         </span>
       </h3>
       <ul className="mt-3">
-        <PegawaiPeminjamanMenu pathname={pathname} setSidebarExpanded={setSidebarExpanded} />
+        <PegawaiPeminjamanMenu
+          pathname={pathname}
+          setSidebarExpanded={setSidebarExpanded}
+        />
       </ul>
     </div>
   );
@@ -385,7 +489,7 @@ function JanitorNav({ pathname, setSidebarExpanded }) {
     {
       to: "/janitor/laporan-sarpras",
       icon: "🔧",
-      label: "Laporan Kerusakan",
+      label: "Laporan Kondisi",
       match: pathname.includes("laporan-sarpras"),
     },
   ];
@@ -399,9 +503,15 @@ function JanitorNav({ pathname, setSidebarExpanded }) {
       </h3>
 
       <ul className="mt-3">
-        <SidebarLinkGroup activecondition={pathname === "/janitor" || pathname === "/janitor/"}>
+        <SidebarLinkGroup
+          activecondition={pathname === "/janitor" || pathname === "/janitor/"}
+        >
           {() => (
-            <NavLink end to="/janitor" className={({ isActive }) => navLinkClass(isActive)}>
+            <NavLink
+              end
+              to="/janitor"
+              className={({ isActive }) => navLinkClass(isActive)}
+            >
               <div className="flex items-center">
                 <span className="text-lg mr-3">🧹</span>
                 <span className="text-sm font-medium ml-4">
@@ -415,12 +525,13 @@ function JanitorNav({ pathname, setSidebarExpanded }) {
         {opsItems.map((item) => (
           <SidebarLinkGroup key={item.to} activecondition={item.match}>
             {() => (
-              <NavLink to={item.to} className={({ isActive }) => navLinkClass(isActive)}>
+              <NavLink
+                to={item.to}
+                className={({ isActive }) => navLinkClass(isActive)}
+              >
                 <div className="flex items-center">
                   <span className="text-lg mr-3">{item.icon}</span>
-                  <span className="text-sm font-medium">
-                    {item.label}
-                  </span>
+                  <span className="text-sm font-medium">{item.label}</span>
                 </div>
               </NavLink>
             )}
@@ -429,16 +540,23 @@ function JanitorNav({ pathname, setSidebarExpanded }) {
       </ul>
     </div>
   );
-};
+}
 
 function PeminjamNav({ pathname, setSidebarExpanded }) {
   return (
     <div>
       <h3 className="text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3">
-        <span className="lg:hidden lg:sidebar-expanded:block 2xl:block">Menu Peminjam</span>
+        <span className="lg:hidden lg:sidebar-expanded:block 2xl:block">
+          Menu Peminjam
+        </span>
       </h3>
       <ul className="mt-3">
-        <PeminjamanMenu base="/peminjam" pathname={pathname} setSidebarExpanded={setSidebarExpanded} dashboardLabel="Dashboard Peminjam" />
+        <PeminjamanMenu
+          base="/peminjam"
+          pathname={pathname}
+          setSidebarExpanded={setSidebarExpanded}
+          dashboardLabel="Dashboard Peminjam"
+        />
       </ul>
     </div>
   );
@@ -450,9 +568,19 @@ export default function SidebarNav({ setSidebarExpanded }) {
 
   switch (user?.role) {
     case "janitor":
-      return <JanitorNav pathname={pathname} setSidebarExpanded={setSidebarExpanded} />;
+      return (
+        <JanitorNav
+          pathname={pathname}
+          setSidebarExpanded={setSidebarExpanded}
+        />
+      );
     case "peminjam":
-      return <PeminjamNav pathname={pathname} setSidebarExpanded={setSidebarExpanded} />;
+      return (
+        <PeminjamNav
+          pathname={pathname}
+          setSidebarExpanded={setSidebarExpanded}
+        />
+      );
     case "pegawai_sarpras":
     default:
       return (

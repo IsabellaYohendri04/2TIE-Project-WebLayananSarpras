@@ -84,7 +84,7 @@ export default function DashboardJanitor() {
               </div>
 
               <div className="bg-white rounded-3xl shadow-lg p-6">
-                <p className="text-gray-500">Laporan Kerusakan</p>
+                <p className="text-gray-500">Laporan Kondisi</p>
                 <h2 className="text-4xl font-bold text-red-500 mt-2">
                   {stats.totalLaporan}
                 </h2>

@@ -1,8 +1,75 @@
 const { getPool } = require("../config/db");
+const { uploadPeminjaman } = require("../config/uploadPeminjaman");
+const { sendJadwalEmail } = require("../config/email");
 
 function formatDate(value) {
   if (!value) return "";
   return new Date(value).toISOString().slice(0, 10);
+}
+
+function formatDateTime(value) {
+  if (!value) return null;
+  return new Date(value).toISOString();
+}
+
+function parseDetailJson(raw) {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function parseCreateBody(req) {
+  let detail = req.body.detail;
+  if (typeof detail === "string") {
+    detail = parseDetailJson(detail);
+  }
+  const fileProposal = req.file ? `/uploads/peminjaman/${req.file.filename}` : null;
+  return { ...req.body, detail, fileProposal };
+}
+
+function maybeUploadPeminjaman(req, res, next) {
+  if (req.is("multipart/form-data")) {
+    return uploadPeminjaman.single("fileProposal")(req, res, next);
+  }
+  next();
+}
+
+async function resolvePeminjamEmail(pool, row) {
+  if (row.user_id) {
+    const [users] = await pool.query("SELECT email FROM users WHERE id = ?", [row.user_id]);
+    if (users[0]?.email) return users[0].email;
+  }
+  if (row.nim) {
+    const [users] = await pool.query("SELECT email FROM users WHERE nim = ?", [row.nim]);
+    if (users[0]?.email) return users[0].email;
+  }
+  const detail = parseDetailJson(row.detail_json);
+  return detail?.email || null;
+}
+
+function basePeminjamanFields(row, email) {
+  return {
+    id: row.id,
+    nama: row.nama,
+    nim: row.nim,
+    prodi: row.prodi,
+    email,
+    tanggalPinjam: formatDate(row.tanggal_pinjam),
+    tanggalKembali: formatDate(row.tanggal_kembali),
+    jamMulai: row.jam_mulai,
+    jamSelesai: row.jam_selesai,
+    status: row.status,
+    catatanAdmin: row.catatan_admin,
+    organisasi: row.organisasi,
+    detail: parseDetailJson(row.detail_json),
+    fileProposal: row.file_proposal || null,
+    jadwalSubjek: row.jadwal_subjek || null,
+    jadwalPertemuan: formatDateTime(row.jadwal_pertemuan),
+    createdAt: row.created_at,
+  };
 }
 
 function formatPeminjamanRow(row) {
@@ -30,62 +97,50 @@ function formatPeminjamanRow(row) {
   };
 }
 
-function formatBarangRow(row) {
+function formatBarangRow(row, email = null) {
   return {
-    id: row.id,
+    ...basePeminjamanFields(row, email),
+    tipe: "barang",
     image: row.image || "/images/icon-02.svg",
-    nama: row.nama,
-    nim: row.nim,
-    prodi: row.prodi,
     barang: row.barang,
+    item: row.barang,
     kategori: row.kategori,
-    tanggalPinjam: formatDate(row.tanggal_pinjam),
-    tanggalKembali: formatDate(row.tanggal_kembali),
-    jamMulai: row.jam_mulai,
-    jamSelesai: row.jam_selesai,
-    status: row.status,
-    catatanAdmin: row.catatan_admin,
-    organisasi: row.organisasi,
-    detail: row.detail_json ? JSON.parse(row.detail_json) : null,
   };
 }
 
-function formatRuanganRow(row) {
+function formatRuanganRow(row, email = null) {
   return {
-    id: row.id,
-    nama: row.nama,
-    nim: row.nim,
-    prodi: row.prodi,
+    ...basePeminjamanFields(row, email),
+    tipe: "ruangan",
     ruangan: row.ruangan,
+    item: row.ruangan,
     kategori: row.kategori,
-    tanggalPinjam: formatDate(row.tanggal_pinjam),
-    tanggalKembali: formatDate(row.tanggal_kembali),
-    jamMulai: row.jam_mulai,
-    jamSelesai: row.jam_selesai,
-    status: row.status,
-    catatanAdmin: row.catatan_admin,
-    organisasi: row.organisasi,
-    detail: row.detail_json ? JSON.parse(row.detail_json) : null,
   };
 }
 
-function formatLabRow(row) {
+function formatLabRow(row, email = null) {
   return {
-    id: row.id,
-    nama: row.nama,
-    nim: row.nim,
-    prodi: row.prodi,
+    ...basePeminjamanFields(row, email),
+    tipe: "laboratorium",
     laboratorium: row.laboratorium,
+    item: row.laboratorium,
     kategori: row.kategori,
-    tanggalPinjam: formatDate(row.tanggal_pinjam),
-    tanggalKembali: formatDate(row.tanggal_kembali),
-    jamMulai: row.jam_mulai,
-    jamSelesai: row.jam_selesai,
-    status: row.status,
-    catatanAdmin: row.catatan_admin,
-    organisasi: row.organisasi,
-    detail: row.detail_json ? JSON.parse(row.detail_json) : null,
   };
+}
+
+const tipeConfig = {
+  barang: { table: "peminjaman_barang", itemCol: "barang", format: formatBarangRow },
+  ruangan: { table: "peminjaman_ruangan", itemCol: "ruangan", format: formatRuanganRow },
+  laboratorium: { table: "peminjaman_laboratorium", itemCol: "laboratorium", format: formatLabRow },
+};
+
+async function fetchPeminjamanById(pool, tipe, id) {
+  const config = tipeConfig[tipe];
+  if (!config) return null;
+  const [rows] = await pool.query(`SELECT * FROM ${config.table} WHERE id = ?`, [id]);
+  if (!rows.length) return null;
+  const email = await resolvePeminjamEmail(pool, rows[0]);
+  return config.format(rows[0], email);
 }
 
 function attachPeminjamanRoutes(app) {

@@ -60,7 +60,7 @@ async function clearSarprasReferences(pool, id) {
   try {
     await pool.query(
       "UPDATE laporan_kerusakan SET sarpras_id = NULL WHERE sarpras_id = ?",
-      [id]
+      [id],
     );
   } catch {
     // tabel laporan opsional
@@ -161,7 +161,7 @@ function attachSarprasRoutes(app) {
       } catch (error) {
         res.status(500).json({ success: false, message: error.message });
       }
-    }
+    },
   );
 
   app.delete(
@@ -181,7 +181,7 @@ function attachSarprasRoutes(app) {
         const pool = getPool();
         const [existing] = await pool.query(
           "SELECT id, kondisi_image FROM sarpras WHERE id = ?",
-          [id]
+          [id],
         );
 
         if (existing.length === 0) {
@@ -198,28 +198,33 @@ function attachSarprasRoutes(app) {
       } catch (error) {
         res.status(500).json({ success: false, message: error.message });
       }
-    }
+    },
   );
 
-  app.get("/api/sarpras/:id", authenticate, janitorOrPegawai, async (req, res) => {
-    try {
-      const pool = getPool();
-      const [rows] = await pool.query(
-        "SELECT * FROM sarpras WHERE id = ? AND tipe = 'barang'",
-        [req.params.id]
-      );
+  app.get(
+    "/api/sarpras/:id",
+    authenticate,
+    janitorOrPegawai,
+    async (req, res) => {
+      try {
+        const pool = getPool();
+        const [rows] = await pool.query(
+          "SELECT * FROM sarpras WHERE id = ? AND tipe = 'barang'",
+          [req.params.id],
+        );
 
-      if (rows.length === 0) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Sarpras tidak ditemukan" });
+        if (rows.length === 0) {
+          return res
+            .status(404)
+            .json({ success: false, message: "Sarpras tidak ditemukan" });
+        }
+
+        res.json({ success: true, data: formatSarprasRow(rows[0]) });
+      } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
       }
-
-      res.json({ success: true, data: formatSarprasRow(rows[0]) });
-    } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
-    }
-  });
+    },
+  );
 
   app.post(
     "/api/sarpras",
@@ -252,19 +257,21 @@ function attachSarprasRoutes(app) {
             fields.lokasi,
             fields.kondisi_teks,
             kondisi_image,
-          ]
+          ],
         );
 
         const [rows] = await pool.query("SELECT * FROM sarpras WHERE id = ?", [
           result.insertId,
         ]);
 
-        res.status(201).json({ success: true, data: formatSarprasRow(rows[0]) });
+        res
+          .status(201)
+          .json({ success: true, data: formatSarprasRow(rows[0]) });
       } catch (error) {
         if (req.file) removeUploadedFile(buildImagePath(req.file));
         res.status(500).json({ success: false, message: error.message });
       }
-    }
+    },
   );
 
   app.put(
@@ -288,7 +295,7 @@ function attachSarprasRoutes(app) {
         const pool = getPool();
         const [existing] = await pool.query(
           "SELECT id, kondisi_image FROM sarpras WHERE id = ?",
-          [id]
+          [id],
         );
 
         if (existing.length === 0) {
@@ -318,16 +325,18 @@ function attachSarprasRoutes(app) {
             fields.kondisi_teks,
             kondisi_image,
             id,
-          ]
+          ],
         );
 
-        const [rows] = await pool.query("SELECT * FROM sarpras WHERE id = ?", [id]);
+        const [rows] = await pool.query("SELECT * FROM sarpras WHERE id = ?", [
+          id,
+        ]);
         res.json({ success: true, data: formatSarprasRow(rows[0]) });
       } catch (error) {
         if (req.file) removeUploadedFile(buildImagePath(req.file));
         res.status(500).json({ success: false, message: error.message });
       }
-    }
+    },
   );
 }
 

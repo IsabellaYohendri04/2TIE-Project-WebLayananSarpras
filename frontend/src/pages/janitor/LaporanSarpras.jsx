@@ -19,7 +19,7 @@ export default function LaporanSarpras() {
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Gagal memuat laporan. Pastikan server berjalan."
+          "Gagal memuat laporan. Pastikan server berjalan.",
       );
     } finally {
       setLoading(false);
@@ -53,7 +53,9 @@ export default function LaporanSarpras() {
       await updateLaporanStatus(id, newStatus);
       fetchData();
     } catch (err) {
-      setError(err.response?.data?.message || "Gagal memperbarui status laporan");
+      setError(
+        err.response?.data?.message || "Gagal memperbarui status laporan",
+      );
     } finally {
       setUpdatingId(null);
     }
@@ -62,13 +64,12 @@ export default function LaporanSarpras() {
   return (
     <main className="grow bg-slate-50">
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">
             Laporan Sarpras 🔧
           </h1>
           <p className="text-gray-500 mt-2">
-            Monitoring dan penanganan laporan kerusakan fasilitas
+            Monitoring dan penanganan laporan kondisi fasilitas
           </p>
         </div>
 
@@ -108,7 +109,9 @@ export default function LaporanSarpras() {
         {loading ? (
           <div className="text-center text-gray-500 py-12">Memuat data...</div>
         ) : data.length === 0 ? (
-          <div className="text-center text-gray-500 py-12">Belum ada laporan.</div>
+          <div className="text-center text-gray-500 py-12">
+            Belum ada laporan.
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {data.map((item) => (
@@ -135,7 +138,7 @@ export default function LaporanSarpras() {
                   <div className="mt-3">
                     <span
                       className={`px-3 py-1 rounded-full text-sm ${getStatusColor(
-                        item.status
+                        item.status,
                       )}`}
                     >
                       {item.status}
