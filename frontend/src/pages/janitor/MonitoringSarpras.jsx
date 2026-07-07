@@ -53,17 +53,18 @@ export default function MonitoringSarpras() {
   const totalOverdue = data.filter((item) => isOverdue(item.deadline)).length;
 
   return (
-    <main className="grow bg-slate-50">
+    <main className="grow min-h-screen bg-[#F5F7FB]">
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">
-            Monitoring Sarpras 📊
-          </h1>
-          <p className="text-gray-500 mt-2">
-            Pantau penggunaan dan kondisi sarana prasarana secara real-time
-          </p>
-        </div>
+        <div className="mb-8 rounded-[28px] bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 p-8 text-white shadow-xl">
+        <h1 className="text-4xl font-bold">
+          Monitoring Sarpras 📊
+        </h1>
+
+        <p className="text-indigo-100 mt-2 text-lg">
+          Pantau penggunaan dan kondisi sarana prasarana secara real-time
+        </p>
+      </div>
 
         {error && (
           <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-xl mb-6">
@@ -75,22 +76,22 @@ export default function MonitoringSarpras() {
           <div className="text-center text-gray-500 py-12">Memuat data...</div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white p-5 rounded-3xl shadow">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-7 mb-8">
+              <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 p-6">
                 <p className="text-gray-500">Sedang Dipakai</p>
-                <h2 className="text-3xl font-bold text-blue-600">{totalDipakai}</h2>
+                <h2 className="text-3xl font-bold text-indigo-600">{totalDipakai}</h2>
               </div>
-              <div className="bg-white p-5 rounded-3xl shadow">
+              <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 p-6">
                 <p className="text-gray-500">Tersedia</p>
-                <h2 className="text-3xl font-bold text-green-600">{totalTersedia}</h2>
+                <h2 className="text-3xl font-bold text-indigo-600">{totalTersedia}</h2>
               </div>
-              <div className="bg-white p-5 rounded-3xl shadow">
+              <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 p-6">
                 <p className="text-gray-500">Rusak</p>
-                <h2 className="text-3xl font-bold text-red-600">{totalRusak}</h2>
+                <h2 className="text-3xl font-bold text-indigo-600">{totalRusak}</h2>
               </div>
-              <div className="bg-white p-5 rounded-3xl shadow">
+              <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 p-6">
                 <p className="text-gray-500">Overdue</p>
-                <h2 className="text-3xl font-bold text-yellow-600">{totalOverdue}</h2>
+                <h2 className="text-3xl font-bold text-indigo-600">{totalOverdue}</h2>
               </div>
             </div>
 
@@ -109,7 +110,7 @@ export default function MonitoringSarpras() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
               {filteredData.map((item) => (
                 <div
                   key={item.id}

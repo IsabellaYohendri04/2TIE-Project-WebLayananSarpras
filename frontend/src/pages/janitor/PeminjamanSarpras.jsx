@@ -4,10 +4,17 @@ import { useDebouncedValue } from "../../hooks/usePaginatedFilter";
 import { getPeminjaman } from "./services/janitorService";
 
 const statusStyle = {
-  Menunggu: "bg-amber-100 text-amber-800 border-amber-200",
-  Disetujui: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  Ditolak: "bg-red-100 text-red-800 border-red-200",
-  APPROVED: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  Menunggu:
+    "bg-amber-100 text-amber-700 border-amber-200",
+
+  Disetujui:
+    "bg-blue-100 text-blue-700 border-blue-200",
+
+  Ditolak:
+    "bg-red-100 text-red-700 border-red-200",
+
+  APPROVED:
+    "bg-blue-100 text-blue-700 border-blue-200",
 };
 
 const tipeIcon = {
@@ -77,13 +84,13 @@ export default function PeminjamanSarpras() {
   };
 
   return (
-    <main className="grow min-h-screen bg-[radial-gradient(circle_at_top,_#ecfdf5,_#f8fafc_50%)]">
+    <main className="grow min-h-screen bg-[#F5F7FB]">
       <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-        <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-r from-emerald-700 via-teal-700 to-cyan-700 p-8 shadow-2xl mb-8">
+        <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 p-8 shadow-2xl mb-8">
           <div className="absolute right-0 top-0 opacity-10 text-[160px] select-none">📑</div>
           <div className="relative z-10">
             <h1 className="text-3xl font-bold text-white">Peminjaman Sarpras</h1>
-            <p className="text-emerald-100 mt-2">
+            <p className="text-indigo-100 mt-2">
               Semua pengajuan peminjaman langsung masuk ke sini — pantau real-time
             </p>
           </div>
@@ -95,16 +102,31 @@ export default function PeminjamanSarpras() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           {[
-            { key: "all", label: "Semua Pengajuan", value: counts.all, color: "from-slate-600 to-slate-800" },
-            { key: "pending", label: "Menunggu", value: counts.pending, color: "from-amber-500 to-orange-600" },
-            { key: "approved", label: "Disetujui", value: counts.approved, color: "from-emerald-500 to-teal-600" },
+            {
+            key: "all",
+            label: "Semua Pengajuan",
+            value: counts.all,
+            color: "from-violet-600 to-indigo-600",
+          },
+          {
+            key: "pending",
+            label: "Menunggu",
+            value: counts.pending,
+            color: "from-amber-400 to-orange-500",
+          },
+          {
+            key: "approved",
+            label: "Disetujui",
+            value: counts.approved,
+            color: "from-blue-500 to-cyan-500",
+          },
           ].map((c) => (
             <button
               key={c.key}
               type="button"
               onClick={() => setFilter(c.key)}
               className={`text-left rounded-2xl p-5 transition-all duration-300 ${
-                filter === c.key ? "ring-4 ring-emerald-300 scale-[1.02]" : "hover:scale-[1.01]"
+                filter === c.key ? "ring-4 ring-indigo-300 scale-[1.02]" : "hover:scale-[1.01]"
               } bg-gradient-to-br ${c.color} text-white shadow-lg`}
             >
               <p className="text-white/80 text-sm">{c.label}</p>
@@ -120,16 +142,16 @@ export default function PeminjamanSarpras() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari item, peminjam..."
-              className="w-full border border-slate-200 rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full border border-slate-200 rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
             <span className="absolute left-4 top-3 text-lg">🔍</span>
           </div>
         </div>
 
-        <div className="bg-white rounded-[28px] shadow-xl border border-slate-100 overflow-hidden">
+        <div className="bg-white rounded-[28px] border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
           {loading ? (
             <div className="p-16 text-center">
-              <div className="w-10 h-10 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto" />
+              <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto" />
               <p className="text-gray-500 mt-4">Memuat data peminjaman...</p>
             </div>
           ) : filtered.length === 0 ? (
@@ -141,7 +163,7 @@ export default function PeminjamanSarpras() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+                  <tr className="bg-gradient-to-r from-violet-600 to-blue-600 text-white">
                     <th className="text-left p-4 font-semibold">Item</th>
                     <th className="text-left p-4 font-semibold">Peminjam</th>
                     <th className="text-left p-4 font-semibold">Periode</th>
@@ -151,7 +173,7 @@ export default function PeminjamanSarpras() {
                 </thead>
                 <tbody>
                   {paginated.map((item) => (
-                    <tr key={`${item.tipe}-${item.id}`} className="border-t border-slate-100 hover:bg-emerald-50/40 transition">
+                    <tr key={`${item.tipe}-${item.id}`} className="border-t border-slate-100 hover:bg-indigo-50/40 transition">
                       <td className="p-4">
                         <div className="flex items-center gap-2">
                           <span>{tipeIcon[item.tipe] || "📋"}</span>
